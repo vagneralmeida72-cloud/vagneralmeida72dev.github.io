@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2026/08/18 11:20:07.000.055,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/18 11:20:28.000.189,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/25 15:48:42.200,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/25 15:49:44.890,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\SistemaClientes.pas=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/25 15:49:44.890,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\SistemaClientes.dfm=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2026/08/25 15:51:34.232,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\uSistemaClientes.dproj=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>
