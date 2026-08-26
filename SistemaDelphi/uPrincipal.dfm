@@ -1,9 +1,9 @@
-object frmSistemaClientes: TfrmSistemaClientes
+object frmPrincipal: TfrmPrincipal
   Left = 0
   Top = 0
   BorderIcons = [biSystemMenu]
   Caption = 'Sistema de Clientes'
-  ClientHeight = 461
+  ClientHeight = 441
   ClientWidth = 624
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -11,7 +11,7 @@ object frmSistemaClientes: TfrmSistemaClientes
   Font.Height = -12
   Font.Name = 'Segoe UI'
   Font.Style = []
-  Menu = MainMenu1
+  Menu = Menu
   Position = poScreenCenter
   WindowState = wsMaximized
   TextHeight = 15
@@ -19,7 +19,7 @@ object frmSistemaClientes: TfrmSistemaClientes
     Left = 0
     Top = 0
     Width = 624
-    Height = 461
+    Height = 441
     Align = alClient
     Picture.Data = {
       0954506E67496D61676589504E470D0A1A0A0000000D49484452000004E60000
@@ -59374,42 +59374,42 @@ object frmSistemaClientes: TfrmSistemaClientes
       F27DE02054C3A546315FA18C09AA06C59D6DB289E3B032FAFFE67ADBD2F53E44
       640000000049454E44AE426082}
     Stretch = True
-    ExplicitLeft = 200
-    ExplicitTop = 168
+    ExplicitLeft = 88
+    ExplicitTop = 104
     ExplicitWidth = 105
     ExplicitHeight = 105
   end
-  object MainMenu1: TMainMenu
-    Left = 40
-    Top = 16
-    object teste1: TMenuItem
+  object Menu: TMainMenu
+    Left = 24
+    Top = 24
+    object miConfiguracoes: TMenuItem
       Caption = 'Configura'#231#245'es'
-      object Sair1: TMenuItem
+      object miSair: TMenuItem
         Caption = 'Sair'
-        OnClick = Sair1Click
+        OnClick = miSairClick
       end
     end
-    object Cadastro1: TMenuItem
+    object miCadastros: TMenuItem
       Caption = 'Cadastros'
-      object Usurios1: TMenuItem
-        Caption = 'Usu'#225'rio'
+      object miUsuarios: TMenuItem
+        Caption = 'Usu'#225'rios'
       end
-      object Cliente1: TMenuItem
-        Caption = 'Cliente'
+      object miClientes: TMenuItem
+        Caption = 'Clientes'
       end
     end
-    object Movimentaes1: TMenuItem
+    object miMovimentacoes: TMenuItem
       Caption = 'Movimenta'#231#245'es'
-      object Vendas1: TMenuItem
+      object miVendas: TMenuItem
         Caption = 'Vendas'
       end
     end
-    object Relatrios1: TMenuItem
+    object miRelatrios: TMenuItem
       Caption = 'Relat'#243'rios'
-      object Clientes1: TMenuItem
+      object RelClientes: TMenuItem
         Caption = 'Clientes'
       end
-      object Vendas2: TMenuItem
+      object RelVendas: TMenuItem
         Caption = 'Vendas'
       end
     end
