@@ -33,6 +33,7 @@ type
     Vendas2: TMenuItem;
 
     procedure Sair1Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
 
   private
 
@@ -46,6 +47,11 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TfrmSistemaClientes.FormCreate(Sender: TObject);
+begin
+ Self.Menu := MainMenu1;
+end;
 
 procedure TfrmSistemaClientes.Sair1Click(Sender: TObject);
 begin

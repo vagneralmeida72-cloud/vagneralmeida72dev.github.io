@@ -20,12 +20,11 @@ uses
 type
   TfrmSistemaClientes = class(TForm)
     MainMenu1: TMainMenu;
-    teste1: TMenuItem;
-    Cadastro1: TMenuItem;
+    Configuraes1: TMenuItem;
     Sair1: TMenuItem;
-    imgPrincipal: TImage;
+    Cadastros1: TMenuItem;
+    Usurio1: TMenuItem;
     Cliente1: TMenuItem;
-    Usurios1: TMenuItem;
     Movimentaes1: TMenuItem;
     Vendas1: TMenuItem;
     Relatrios1: TMenuItem;

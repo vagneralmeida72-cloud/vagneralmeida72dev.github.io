@@ -23,14 +23,6 @@ type
     teste1: TMenuItem;
     Cadastro1: TMenuItem;
     Sair1: TMenuItem;
-    imgPrincipal: TImage;
-    Cliente1: TMenuItem;
-    Usurios1: TMenuItem;
-    Movimentaes1: TMenuItem;
-    Vendas1: TMenuItem;
-    Relatrios1: TMenuItem;
-    Clientes1: TMenuItem;
-    Vendas2: TMenuItem;
 
     procedure Sair1Click(Sender: TObject);
 

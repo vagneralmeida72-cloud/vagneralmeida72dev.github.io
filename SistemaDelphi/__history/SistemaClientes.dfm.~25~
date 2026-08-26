@@ -1,6 +1,7 @@
 object frmSistemaClientes: TfrmSistemaClientes
   Left = 0
   Top = 0
+  Align = alClient
   BorderIcons = [biSystemMenu]
   Caption = 'Sistema de Clientes'
   ClientHeight = 461
@@ -14,6 +15,7 @@ object frmSistemaClientes: TfrmSistemaClientes
   Menu = MainMenu1
   Position = poScreenCenter
   WindowState = wsMaximized
+  OnCreate = FormCreate
   TextHeight = 15
   object imgPrincipal: TImage
     Left = 0

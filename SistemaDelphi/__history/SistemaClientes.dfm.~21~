@@ -1,0 +1,32 @@
+object frmSistemaClientes: TfrmSistemaClientes
+  Left = 0
+  Top = 0
+  Align = alClient
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
+  Caption = 'Sistema de Clientes'
+  ClientHeight = 461
+  ClientWidth = 624
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Menu = MainMenu1
+  OnCreate = FormCreate
+  TextHeight = 15
+  object MainMenu1: TMainMenu
+    Left = 40
+    Top = 16
+    object teste1: TMenuItem
+      Caption = 'teste'
+      object Sair1: TMenuItem
+        Caption = 'Sair'
+      end
+    end
+    object Cadastro1: TMenuItem
+      Caption = 'Cadastro'
+    end
+  end
+end

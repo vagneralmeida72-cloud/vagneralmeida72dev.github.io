@@ -1,0 +1,14 @@
+program uSistemaClientes;
+
+uses
+  Vcl.Forms,
+  uMenuPrincipal in 'uMenuPrincipal.pas' {frmMenuPrincipal};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TfrmMenuPrincipal, frmMenuPrincipal);
+  Application.Run;
+end.

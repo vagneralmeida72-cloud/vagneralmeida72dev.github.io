@@ -1,7 +1,9 @@
 object frmSistemaClientes: TfrmSistemaClientes
   Left = 0
   Top = 0
+  Align = alClient
   BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
   Caption = 'Sistema de Clientes'
   ClientHeight = 461
   ClientWidth = 624
@@ -12,8 +14,7 @@ object frmSistemaClientes: TfrmSistemaClientes
   Font.Name = 'Segoe UI'
   Font.Style = []
   Menu = MainMenu1
-  Position = poScreenCenter
-  WindowState = wsMaximized
+  OnCreate = FormCreate
   TextHeight = 15
   object imgPrincipal: TImage
     Left = 0
@@ -59386,7 +59387,6 @@ object frmSistemaClientes: TfrmSistemaClientes
       Caption = 'Configura'#231#245'es'
       object Sair1: TMenuItem
         Caption = 'Sair'
-        OnClick = Sair1Click
       end
     end
     object Cadastro1: TMenuItem

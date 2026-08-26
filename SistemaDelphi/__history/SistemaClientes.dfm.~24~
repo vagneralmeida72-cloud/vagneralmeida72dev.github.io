@@ -1,10 +1,12 @@
 object frmSistemaClientes: TfrmSistemaClientes
   Left = 0
   Top = 0
+  Align = alClient
   BorderIcons = [biSystemMenu]
+  BorderStyle = bsNone
   Caption = 'Sistema de Clientes'
-  ClientHeight = 461
-  ClientWidth = 624
+  ClientHeight = 500
+  ClientWidth = 640
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,12 +16,13 @@ object frmSistemaClientes: TfrmSistemaClientes
   Menu = MainMenu1
   Position = poScreenCenter
   WindowState = wsMaximized
+  OnCreate = FormCreate
   TextHeight = 15
   object imgPrincipal: TImage
     Left = 0
     Top = 0
-    Width = 624
-    Height = 461
+    Width = 640
+    Height = 500
     Align = alClient
     Picture.Data = {
       0954506E67496D61676589504E470D0A1A0A0000000D49484452000004E60000

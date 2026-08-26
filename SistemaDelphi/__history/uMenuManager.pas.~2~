@@ -1,0 +1,154 @@
+unit uMenuManager;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Classes,
+  Vcl.Menus,
+  Vcl.Controls;
+
+type
+  // Classe que representa qualquer TFrame
+  TFrameClass = class of TFrame;
+
+  // Configuração de cada item do menu
+  TMenuConfig = record
+    Menu: string;
+    SubMenu: string;
+    FrameClass: TFrameClass;
+  end;
+
+  TMenuManager = class
+  private
+    FMainMenu: TMainMenu;
+    FContainer: TWinControl;
+
+    function EncontrarMenu(
+      const ANome: string
+    ): TMenuItem;
+
+    procedure MenuClick(Sender: TObject);
+
+  public
+    constructor Create(
+      AMainMenu: TMainMenu;
+      AContainer: TWinControl
+    );
+
+    procedure CriarMenus(
+      const AMenus: array of TMenuConfig
+    );
+  end;
+
+implementation
+
+{ TMenuManager }
+
+constructor TMenuManager.Create(
+  AMainMenu: TMainMenu;
+  AContainer: TWinControl
+);
+begin
+  FMainMenu := AMainMenu;
+  FContainer := AContainer;
+end;
+
+function TMenuManager.EncontrarMenu(
+  const ANome: string
+): TMenuItem;
+var
+  I: Integer;
+begin
+  Result := nil;
+
+  for I := 0 to FMainMenu.Items.Count - 1 do
+  begin
+    if SameText(
+      FMainMenu.Items[I].Caption,
+      ANome
+    ) then
+    begin
+      Result := FMainMenu.Items[I];
+      Exit;
+    end;
+  end;
+end;
+
+procedure TMenuManager.CriarMenus(
+  const AMenus: array of TMenuConfig
+);
+var
+  I: Integer;
+  MenuPai: TMenuItem;
+  SubMenu: TMenuItem;
+begin
+
+  for I := 0 to High(AMenus) do
+  begin
+
+    // Procura o menu principal
+    MenuPai := EncontrarMenu(
+      AMenus[I].Menu
+    );
+
+    // Se não existir, cria
+    if not Assigned(MenuPai) then
+    begin
+      MenuPai := TMenuItem.Create(FMainMenu);
+
+      MenuPai.Caption :=
+        AMenus[I].Menu;
+
+      FMainMenu.Items.Add(MenuPai);
+    end;
+
+    // Cria o submenu
+    if AMenus[I].SubMenu <> '' then
+    begin
+      SubMenu := TMenuItem.Create(MenuPai);
+
+      SubMenu.Caption :=
+        AMenus[I].SubMenu;
+
+      // Guarda a classe do Frame
+      SubMenu.Tag :=
+        NativeInt(AMenus[I].FrameClass);
+
+      SubMenu.OnClick :=
+        MenuClick;
+
+      MenuPai.Add(SubMenu);
+    end;
+
+  end;
+
+end;
+
+procedure TMenuManager.MenuClick(Sender: TObject);
+var
+  Item: TMenuItem;
+  FrameClass: TFrameClass;
+  Frame: TFrame;
+begin
+
+  Item := TMenuItem(Sender);
+
+  FrameClass :=
+    TFrameClass(Item.Tag);
+
+  Frame :=
+    FrameClass.Create(FContainer);
+
+  Frame.Parent :=
+    FContainer;
+
+  Frame.Align :=
+    alClient;
+
+  Frame.Visible :=
+    True;
+
+end;
+
+end.
