@@ -1,0 +1,56 @@
+unit uDM;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Classes,
+  FireDAC.Stan.Intf,
+  FireDAC.Stan.Option,
+  FireDAC.Stan.Error,
+  FireDAC.UI.Intf,
+  FireDAC.Phys.Intf,
+  FireDAC.Stan.Def,
+  FireDAC.Stan.Pool,
+  FireDAC.Stan.Async,
+  FireDAC.Phys,
+  FireDAC.Phys.FB,
+  FireDAC.Phys.FBDef,
+  FireDAC.Comp.Client;
+
+type
+  TDM = class(TDataModule)
+    FDConnection: TFDConnection;
+    FDPhysFBDriverLink: TFDPhysFBDriverLink;
+  public
+    procedure P_Conectar;
+  end;
+
+var
+  DM: TDM;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+procedure TDM.P_Conectar;
+begin
+  FDConnection.Close;
+
+  FDConnection.DriverName := 'FB';
+
+  FDConnection.Params.Clear;
+  FDConnection.Params.Add('DriverID=FB');
+  FDConnection.Params.Add('Database=C:\Projetos\SistemaCliente\Banco\SISTEMACLIENTE.FDB');
+  FDConnection.Params.Add('User_Name=SYSDBA');
+  FDConnection.Params.Add('Password=masterkey');
+  FDConnection.Params.Add('CharacterSet=UTF8');
+
+  FDConnection.LoginPrompt := False;
+
+  FDConnection.Open;
+end;
+
+end.

@@ -1,0 +1,131 @@
+﻿inherited frmCliente: TfrmCliente
+  Caption = 'Cadastro de Cliente'
+  StyleElements = [seFont, seClient, seBorder]
+  TextHeight = 15
+  inherited pnlBotoes: TPanel
+    StyleElements = [seFont, seClient, seBorder]
+  end
+  inherited pgcCadastro: TPageControl
+    ActivePage = tsCadastro
+    inherited tsCadastro: TTabSheet
+      inherited pnlCadastro: TPanel
+        StyleElements = [seFont, seClient, seBorder]
+        object Código: TLabel
+          Left = 37
+          Top = 27
+          Width = 39
+          Height = 15
+          Caption = 'C'#243'digo'
+        end
+        object lblNome: TLabel
+          Left = 43
+          Top = 51
+          Width = 33
+          Height = 15
+          Caption = 'Nome'
+        end
+        object Label3: TLabel
+          Left = 42
+          Top = 75
+          Width = 34
+          Height = 15
+          Caption = 'E-mail'
+        end
+        object Label4: TLabel
+          Left = 55
+          Top = 99
+          Width = 21
+          Height = 15
+          Caption = 'CPF'
+        end
+        object Label1: TLabel
+          Left = 31
+          Top = 123
+          Width = 45
+          Height = 15
+          Caption = 'Telefone'
+        end
+        object edtCodigo: TDBEdit
+          Left = 82
+          Top = 24
+          Width = 50
+          Height = 23
+          Color = clSilver
+          DataField = 'ID'
+          DataSource = dsCadastro
+          ReadOnly = True
+          TabOrder = 0
+        end
+        object edtNome: TDBEdit
+          Left = 82
+          Top = 48
+          Width = 300
+          Height = 23
+          DataField = 'NOME'
+          DataSource = dsCadastro
+          MaxLength = 100
+          TabOrder = 1
+        end
+        object edtEmail: TDBEdit
+          Left = 82
+          Top = 72
+          Width = 300
+          Height = 23
+          DataField = 'EMAIL'
+          DataSource = dsCadastro
+          MaxLength = 100
+          TabOrder = 2
+        end
+        object edtCPF: TDBEdit
+          Left = 82
+          Top = 96
+          Width = 121
+          Height = 23
+          DataField = 'CPF'
+          DataSource = dsCadastro
+          TabOrder = 3
+        end
+        object edtTelefone: TDBEdit
+          Left = 82
+          Top = 120
+          Width = 121
+          Height = 23
+          DataField = 'TELEFONE'
+          DataSource = dsCadastro
+          TabOrder = 4
+        end
+      end
+    end
+  end
+  inherited cdsCadastro: TClientDataSet
+    object cdsCadastroID: TIntegerField
+      FieldName = 'ID'
+      ProviderFlags = [pfInUpdate, pfInWhere, pfInKey]
+      Required = True
+    end
+    object cdsCadastroNOME: TStringField
+      FieldName = 'NOME'
+      Size = 100
+    end
+    object cdsCadastroCPF: TStringField
+      FieldName = 'CPF'
+      Size = 100
+    end
+    object cdsCadastroEMAIL: TStringField
+      FieldName = 'EMAIL'
+    end
+    object cdsCadastroTELEFONE: TStringField
+      FieldName = 'TELEFONE'
+    end
+  end
+  inherited qryCadastro: TFDQuery
+    SQL.Strings = (
+      'SELECT '
+      '     ID, '
+      '    NOME, '
+      '    CPF, '
+      '    EMAIL, '
+      '    TELEFONE'
+      '    FROM CLIENTE ')
+  end
+end

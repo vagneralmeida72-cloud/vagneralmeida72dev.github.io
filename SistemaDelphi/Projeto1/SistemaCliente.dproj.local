@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2026/08/18 11:20:07.000.055,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/18 11:20:28.000.189,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/26 16:07:56.000.858,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/26 16:37:13.000.332,=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/26 16:39:25.000.059,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\uPrincipal.dfm=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2026/08/26 16:39:25.000.059,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\uPrincipal.pas=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2026/08/26 16:40:09.000.893,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\SistemaCliente.dproj=C:\Users\guih\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2026/08/27 13:53:44.000.336,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 13:55:19.000.857,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\uFrmCadastroBase.pas</Transaction>
+    <Transaction>2026/08/27 13:55:19.000.857,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.dfm=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\uFrmCadastroBase.dfm</Transaction>
+    <Transaction>2026/08/27 15:41:15.000.883,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 15:43:17.000.460,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Cadastros\uCliente.dfm=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.dfm</Transaction>
+    <Transaction>2026/08/27 15:43:17.000.460,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Cadastros\uCliente.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 15:46:22.000.159,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 15:48:02.000.318,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Cadastros\uClientes.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 15:48:02.000.318,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Cadastros\uClientes.dfm=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.dfm</Transaction>
+    <Transaction>2026/08/27 16:05:55.000.902,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 16:06:23.000.490,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\uDM.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/27 16:06:23.000.490,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\uDM.dfm=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.dfm</Transaction>
+    <Transaction>2026/08/28 10:40:42.000.063,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/08/28 10:41:10.000.636,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Services\uClienteService.pas</Transaction>
+    <Transaction>2026/09/02 14:44:53.221,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/09/02 14:45:18.023,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\Update\uUpdate.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/09/02 14:52:17.445,=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+    <Transaction>2026/09/02 14:53:23.713,C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\Update\uLibFuncoesUpdate.pas=C:\Users\guih\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Unit1.pas</Transaction>
+  </Transactions>
+</BorlandProject>

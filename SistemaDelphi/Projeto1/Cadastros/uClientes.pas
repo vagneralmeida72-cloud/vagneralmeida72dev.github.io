@@ -1,0 +1,54 @@
+unit uClientes;
+
+interface
+
+uses
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Variants,
+  System.Classes,
+
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+
+  uFrmCadastroBase,
+
+  Data.DB,
+
+  Vcl.StdCtrls,
+  Vcl.ExtCtrls,
+  Vcl.Mask,
+  Vcl.DBCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, System.ImageList, Vcl.ImgList,
+  Datasnap.Provider, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  Datasnap.DBClient, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Buttons;
+
+type
+  TfrmCliente = class(TfrmCadastroBase)
+    Código: TLabel;
+    lblNome: TLabel;
+    Label3: TLabel;
+    Label4: TLabel;
+    Label1: TLabel;
+
+    edtCodigo: TDBEdit;
+    edtNome: TDBEdit;
+    edtEmail: TDBEdit;
+    edtCPF: TDBEdit;
+    edtTelefone: TDBEdit;
+  private
+  public
+  end;
+
+var
+  frmCliente: TfrmCliente;
+
+implementation
+
+{$R *.dfm}
+
+end.

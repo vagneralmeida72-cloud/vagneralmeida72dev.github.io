@@ -1,0 +1,73 @@
+unit uLibFuncoesUpdate;
+
+interface
+
+uses
+  FireDAC.Comp.Client;
+
+type
+  TDatabaseUpdate = class
+  private
+    FConnection: TFDConnection;
+
+  public
+    constructor Create(
+      pConnection: TFDConnection
+    );
+
+    function F_TabelaExiste(
+      pTabela: string
+    ): Boolean;
+
+    function F_CampoExiste(
+      pTabela,
+      pCampo: string
+    ): Boolean;
+
+    property Connection: TFDConnection read FConnection;
+  end;
+
+implementation
+
+uses
+  System.SysUtils;
+
+constructor TDatabaseUpdate.Create(
+  pConnection: TFDConnection
+);
+begin
+  FConnection := pConnection;
+end;
+
+function TDatabaseUpdate.F_TabelaExiste(
+  pTabela: string
+): Boolean;
+begin
+  Result :=
+    FConnection.ExecSQLScalar(
+      'SELECT COUNT(*) ' +
+      'FROM RDB$RELATIONS ' +
+      'WHERE RDB$RELATION_NAME = :NOME',
+      [UpperCase(pTabela)]
+    ) > 0;
+end;
+
+function TDatabaseUpdate.F_CampoExiste(
+  pTabela,
+  pCampo: string
+): Boolean;
+begin
+  Result :=
+    FConnection.ExecSQLScalar(
+      'SELECT COUNT(*) ' +
+      'FROM RDB$RELATION_FIELDS ' +
+      'WHERE RDB$RELATION_NAME = :TABELA ' +
+      'AND RDB$FIELD_NAME = :CAMPO',
+      [
+        UpperCase(pTabela),
+        UpperCase(pCampo)
+      ]
+    ) > 0;
+end;
+
+end.

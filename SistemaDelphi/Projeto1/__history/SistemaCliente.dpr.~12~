@@ -1,0 +1,21 @@
+program SistemaCliente;
+
+uses
+  Vcl.Forms,
+  uPrincipal in 'uPrincipal.pas' {frmPrincipal},
+  uFrmCadastroBase in 'Padrao\Forms\uFrmCadastroBase.pas' {frmCadastroBase},
+  uClientes in 'Cadastros\uClientes.pas' {frmCliente},
+  uDM in 'Padrao\Data\uDM.pas' {DM: TDataModule};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TDM, DM);
+  DM.P_Conectar;
+  Application.CreateForm(TfrmPrincipal, frmPrincipal);
+  Application.CreateForm(TfrmCadastroBase, frmCadastroBase);
+  Application.CreateForm(TfrmCliente, frmCliente);
+  Application.Run;
+end.

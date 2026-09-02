@@ -1,0 +1,102 @@
+unit uPrincipal;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Menus, Vcl.Imaging.pngimage,
+  Vcl.ExtCtrls, System.Types;
+
+type
+  TfrmPrincipal = class(TForm)
+    Menu: TMainMenu;
+    miConfiguracoes: TMenuItem;
+    miSair: TMenuItem;
+    miCadastros: TMenuItem;
+    miMovimentacoes: TMenuItem;
+    miRelatrios: TMenuItem;
+    miUsuarios: TMenuItem;
+    miClientes: TMenuItem;
+    miVendas: TMenuItem;
+    RelClientes: TMenuItem;
+    RelVendas: TMenuItem;
+    imgPrincipal: TImage;
+    procedure miSairClick(Sender: TObject);
+    procedure miClientesClick(Sender: TObject);
+  private
+    procedure P_CriaForm(AFormClass: TFormClass);
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmPrincipal: TfrmPrincipal;
+
+implementation
+
+uses
+  uClientes;
+
+{$R *.dfm}
+
+procedure TfrmPrincipal.miClientesClick(Sender: TObject);
+begin
+  P_CriaForm(TfrmCliente);
+end;
+
+procedure TfrmPrincipal.miSairClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TfrmPrincipal.P_CriaForm(AFormClass: TFormClass);
+var
+  Frm: TForm;
+  P: TPoint;
+begin
+  Frm := AFormClass.Create(Self);
+
+  try
+    // Posição da área interna do formulário principal
+    P := ClientToScreen(Point(0, 0));
+
+//    Frm.Width  := ClientWidth - 20;
+//    Frm.Height := ClientHeight - 15;
+
+    // Posição
+    Frm.Left := P.X;
+    Frm.Top := P.Y + 2;
+
+    // Garante que não ultrapasse a tela pela direita
+    if Frm.Left + Frm.Width >
+       Screen.WorkAreaLeft + Screen.WorkAreaWidth then
+    begin
+      Frm.Width :=
+        Screen.WorkAreaLeft +
+        Screen.WorkAreaWidth -
+        Frm.Left;
+    end;
+
+    // Garante que não ultrapasse a tela por baixo
+    if Frm.Top + Frm.Height >
+       Screen.WorkAreaTop + Screen.WorkAreaHeight then
+    begin
+      Frm.Height :=
+        Screen.WorkAreaTop +
+        Screen.WorkAreaHeight -
+        Frm.Top;
+    end;
+
+    Frm.Position    := poDesigned;
+    Frm.BorderStyle := bsSingle;
+    Frm.BorderIcons := [biSystemMenu];
+
+    Frm.ShowModal;
+
+  finally
+    Frm.Free;
+  end;
+end;
+
+end.

@@ -1,0 +1,99 @@
+unit uDM;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Classes,
+  System.IOUtils,
+  FireDAC.Stan.Intf,
+  FireDAC.Stan.Option,
+  FireDAC.Stan.Error,
+  FireDAC.UI.Intf,
+  FireDAC.Phys.Intf,
+  FireDAC.Stan.Def,
+  FireDAC.Stan.Pool,
+  FireDAC.Stan.Async,
+  FireDAC.Phys,
+  FireDAC.Phys.FB,
+  FireDAC.Phys.FBDef,
+  FireDAC.Comp.Client,
+  FireDAC.VCLUI.Wait,
+  FireDAC.Phys.IBBase,
+  Data.DB, uUpdate;
+
+type
+  TDM = class(TDataModule)
+    FDConnection: TFDConnection;
+    FDPhysFBDriverLink: TFDPhysFBDriverLink;
+  private
+    function P_TabelaExiste(const pTabela: string): Boolean;
+  public
+    procedure P_Conectar;
+  end;
+
+var
+  DM: TDM;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls'}
+
+{$R *.dfm}
+
+procedure TDM.P_Conectar;
+var
+  vPasta, vArquivo: string;
+begin
+  vPasta   := TPath.Combine(ExtractFilePath(ParamStr(0)),'Banco');
+  vArquivo := TPath.Combine(vPasta, 'SISTEMACLIENTE.FDB');
+
+  // Cria a pasta Banco
+  if not TDirectory.Exists(vPasta) then
+    TDirectory.CreateDirectory(vPasta);
+
+  // Fecha a conexão caso esteja aberta
+  if FDConnection.Connected then
+    FDConnection.Close;
+
+  // Configuração Firebird
+  FDConnection.DriverName := 'FB';
+
+  FDConnection.Params.Clear;
+
+  FDConnection.Params.Add('DriverID=FB');
+  FDConnection.Params.Add('Database=' + vArquivo);
+  FDConnection.Params.Add('User_Name=SYSDBA');
+  FDConnection.Params.Add('Password=masterkey');
+  FDConnection.Params.Add('CharacterSet=UTF8');
+
+  FDConnection.LoginPrompt := False;
+
+  // Cria o banco caso não exista
+  if not TFile.Exists(vArquivo) then
+    FDConnection.Params.Add('OpenMode=Create');
+
+  try
+    FDConnection.Open;
+    P_CriarEstrutura;
+  except
+    on E: Exception do
+    begin
+      raise Exception.Create('Erro ao conectar ao banco de dados.' +
+        sLineBreak + 'Banco:' + sLineBreak + vArquivo +
+        sLineBreak + E.Message);
+    end;
+  end;
+end;
+
+
+
+function TDM.P_TabelaExiste(const pTabela: string): Boolean;
+begin
+  Result := FDConnection.ExecSQLScalar('SELECT COUNT(*) FROM RDB$RELATIONS ' +
+      'WHERE RDB$RELATION_NAME = :NOME', [UpperCase(pTabela)]) > 0;
+end;
+
+end.
+
+

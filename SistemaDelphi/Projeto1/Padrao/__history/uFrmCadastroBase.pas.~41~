@@ -1,0 +1,216 @@
+unit uFrmCadastroBase;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Data.DB, Vcl.StdCtrls,
+  Datasnap.DBClient, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.ExtCtrls,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, Datasnap.Provider, FireDAC.Comp.DataSet,
+  FireDAC.Comp.Client, System.ImageList, Vcl.ImgList, System.UITypes, Vcl.Buttons;
+
+type
+  TfrmCadastroBase = class(TForm)
+    pnlBotoes: TPanel;
+    pgcCadastro: TPageControl;
+    tsPesquisa: TTabSheet;
+    tsCadastro: TTabSheet;
+    pnlCadastro: TPanel;
+    dbgCadastro: TDBGrid;
+    cdsCadastro: TClientDataSet;
+    dsCadastro: TDataSource;
+    qryCadastro: TFDQuery;
+    dspCadastro: TDataSetProvider;
+    imgIcon: TImageList;
+    btnNovo: TSpeedButton;
+    btnFechar: TSpeedButton;
+    btnExcluir: TSpeedButton;
+    btnAlterar: TSpeedButton;
+    procedure btnExcluirClick(Sender: TObject);
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnAlterarClick(Sender: TObject);
+    procedure dsCadastroStateChange(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure btnFecharClick(Sender: TObject);
+    procedure dbgCadastroTitleClick(Column: TColumn);
+  private
+    FSQLOriginal: string;
+    procedure P_AtualizarBotoes;
+    procedure P_AcaoBotoes(pAcao: Boolean);
+    procedure P_MostrarCadastro;
+    procedure P_MostrarPesquisa;
+    procedure P_PesquisarColuna(pField: TField; pTexto: string);
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmCadastroBase: TfrmCadastroBase;
+
+implementation
+
+{$R *.dfm}
+
+uses uDM;
+
+procedure TfrmCadastroBase.btnAlterarClick(Sender: TObject);
+begin
+  if cdsCadastro.State = dsBrowse then
+  begin
+    if cdsCadastro.IsEmpty then
+    begin
+      ShowMessage('Selecione um registro para alterar!');
+      Exit;
+    end;
+
+    cdsCadastro.Edit;
+    P_MostrarCadastro;
+  end
+  else
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    cdsCadastro.Cancel;
+    P_MostrarPesquisa;
+  end;
+end;
+
+procedure TfrmCadastroBase.btnExcluirClick(Sender: TObject);
+begin
+  if cdsCadastro.IsEmpty then
+    Exit;
+
+  if MessageDlg('Deseja realmente excluir este registro?',
+    mtConfirmation, [mbYes, mbNo], 0) = mrYes then
+  begin
+    cdsCadastro.Delete;
+  end;
+end;
+
+procedure TfrmCadastroBase.btnFecharClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TfrmCadastroBase.btnNovoClick(Sender: TObject);
+begin
+  if cdsCadastro.State = dsBrowse then
+  begin
+    cdsCadastro.Append;
+    P_MostrarCadastro;
+  end
+  else
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    try
+      cdsCadastro.Post;
+      P_MostrarPesquisa;
+    except
+      on E: Exception do
+      begin
+        ShowMessage(E.Message);
+      end;
+    end;
+  end;
+end;
+
+procedure TfrmCadastroBase.dbgCadastroTitleClick(Column: TColumn);
+var
+  vTexto: string;
+begin
+  if not Assigned(Column.Field) then
+    Exit;
+
+  vTexto := '';
+
+  if InputQuery('Pesquisa', 'Pesquisar por ' + Column.Field.DisplayLabel + ':',
+    vTexto) then
+  begin
+    if Trim(vTexto) <> '' then
+      P_PesquisarColuna(Column.Field, vTexto);
+  end;
+end;
+
+procedure TfrmCadastroBase.dsCadastroStateChange(Sender: TObject);
+begin
+  P_AtualizarBotoes;
+end;
+
+procedure TfrmCadastroBase.FormCreate(Sender: TObject);
+begin
+  qryCadastro.Connection := DM.FDConnection;
+  cdsCadastro.Close;
+  qryCadastro.Close;
+  FSQLOriginal := qryCadastro.SQL.Text;
+  qryCadastro.Open;
+  cdsCadastro.Open;
+
+  tsPesquisa.TabVisible  := True;
+  tsCadastro.TabVisible  := False;
+  pgcCadastro.ActivePage := tsPesquisa;
+
+  P_AcaoBotoes(False);
+  P_AtualizarBotoes;
+end;
+
+procedure TfrmCadastroBase.P_AtualizarBotoes;
+begin
+  btnfechar.Enabled  := (cdsCadastro.State = dsBrowse);
+  btnExcluir.Enabled := (cdsCadastro.State = dsBrowse) and
+    not cdsCadastro.IsEmpty;
+end;
+
+procedure TfrmCadastroBase.P_AcaoBotoes(pAcao: Boolean);
+begin
+  if pAcao then
+  begin
+    btnNovo.Caption    := 'Salvar';
+    btnNovo.ImageIndex    := 3;
+    btnAlterar.Caption := 'Cancelar';
+    btnAlterar.ImageIndex := 5;
+  end
+  else
+  begin
+    btnNovo.Caption       := 'Novo';
+    btnNovo.ImageIndex    := 0;
+    btnAlterar.Caption    := 'Alterar';
+    btnAlterar.ImageIndex := 1;
+  end;
+end;
+
+procedure TfrmCadastroBase.P_MostrarPesquisa;
+begin
+  tsPesquisa.TabVisible  := True;
+  tsCadastro.TabVisible  := False;
+  pgcCadastro.ActivePage := tsPesquisa;
+
+  P_AcaoBotoes(False);
+end;
+
+procedure TfrmCadastroBase.P_MostrarCadastro;
+begin
+  tsPesquisa.TabVisible  := False;
+  tsCadastro.TabVisible  := True;
+  pgcCadastro.ActivePage := tsCadastro;
+
+  P_AcaoBotoes(True);
+end;
+
+procedure TfrmCadastroBase.P_PesquisarColuna(pField: TField; pTexto: string);
+begin
+  qryCadastro.Close;
+
+  qryCadastro.SQL.Text := FSQLOriginal +
+    ' WHERE T.' + pField.FieldName +
+    ' LIKE :PESQUISA';
+
+  qryCadastro.ParamByName('PESQUISA').AsString := '%' + Trim(pTexto) + '%';
+  qryCadastro.Open;
+
+  cdsCadastro.Close;
+  cdsCadastro.Open;
+end;
+
+end.
