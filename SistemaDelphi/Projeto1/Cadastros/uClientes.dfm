@@ -57,6 +57,7 @@
           TabOrder = 0
         end
         object edtNome: TDBEdit
+          Tag = 1
           Left = 82
           Top = 48
           Width = 300

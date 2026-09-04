@@ -1,0 +1,41 @@
+unit LibFuncoes;
+
+interface
+
+uses
+  System.SysUtils, Vcl.Dialogs;
+
+type
+  TTipoMensagem = (tmInformacao, tmAviso, tmErro, tmConfirmacao);
+
+  function F_Mensagem(pMensagem: string; pTipo: TTipoMensagem): Integer;
+  function F_Confirmar(pMensagem: string): Boolean;
+
+implementation
+
+function F_Mensagem(pMensagem: string; pTipo: TTipoMensagem): Integer;
+var
+  vTipo: TMsgDlgType;
+begin
+  case pTipo of
+    tmInformacao:
+      vTipo := mtInformation;
+    tmAviso:
+      vTipo := mtWarning;
+    tmErro:
+      vTipo := mtError;
+    tmConfirmacao:
+      vTipo := mtConfirmation;
+  else
+    vTipo := mtInformation;
+  end;
+
+  Result := MessageDlg(pMensagem, vTipo, [mbOK], 0);
+end;
+
+function F_Confirmar(pMensagem: string): Boolean;
+begin
+  Result := MessageDlg(pMensagem, mtConfirmation, [mbYes, mbNo], 0) = mrYes;
+end;
+
+end.

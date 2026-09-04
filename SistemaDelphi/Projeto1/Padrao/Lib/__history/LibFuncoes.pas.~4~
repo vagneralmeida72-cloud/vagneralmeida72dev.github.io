@@ -1,0 +1,74 @@
+unit LibFuncoes;
+
+interface
+
+uses
+  System.SysUtils, System.UITypes, Vcl.Dialogs, Vcl.Forms;
+
+type
+  TTipoMensagem = (tmInformacao, tmAviso, tmErro, tmConfirmacao);
+
+  function F_Mensagem(pMensagem: string; pTipo: TTipoMensagem): Integer;
+  function F_Confirmar(pMensagem: string): Boolean;
+
+implementation
+
+function F_Mensagem(pMensagem: string; pTipo: TTipoMensagem): Integer;
+var
+  vTipo: TMsgDlgType;
+  vTitulo: string;
+  vDialogo: TForm;
+begin
+  case pTipo of
+    tmInformacao:
+      begin
+        vTipo   := mtInformation;
+        vTitulo := 'Informação';
+      end;
+    tmAviso:
+      begin
+        vTipo   := mtWarning;
+        vTitulo := 'Atenção';
+      end;
+    tmErro:
+      begin
+        vTipo   := mtError;
+        vTitulo := 'Erro';
+      end;
+    tmConfirmacao:
+      begin
+        vTipo   := mtConfirmation;
+        vTitulo := 'Confirmação';
+      end;
+  else
+    begin
+      vTipo   := mtInformation;
+      vTitulo := 'Informação';
+    end;
+  end;
+
+  // Cria a janela mantendo o ícone padrão do Windows
+  vDialogo := CreateMessageDialog(pMensagem, vTipo, [mbOK]);
+
+  try
+    vDialogo.Caption := vTitulo;
+    Result           := vDialogo.ShowModal;
+  finally
+    vDialogo.Free;
+  end;
+end;
+
+function F_Confirmar(pMensagem: string): Boolean;
+var
+  vDialogo: TForm;
+begin
+  vDialogo := CreateMessageDialog(pMensagem, mtConfirmation, [mbYes, mbNo]);
+  try
+    vDialogo.Caption := 'Confirmação';
+    Result := vDialogo.ShowModal = mrYes;
+  finally
+    vDialogo.Free;
+  end;
+end;
+
+end.

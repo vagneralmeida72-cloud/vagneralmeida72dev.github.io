@@ -6,9 +6,12 @@ uses
   uFrmCadastroBase in 'Padrao\Forms\uFrmCadastroBase.pas' {frmCadastroBase},
   uClientes in 'Cadastros\uClientes.pas' {frmCliente},
   uDM in 'Padrao\Data\uDM.pas' {DM: TDataModule},
-  uClienteService in 'Services\uClienteService.pas',
+  uClienteService in 'Service\uClienteService.pas',
   uUpdate in 'Padrao\Update\uUpdate.pas',
-  uLibFuncoesUpdate in 'Padrao\Update\uLibFuncoesUpdate.pas';
+  uLibFuncoesUpdate in 'Padrao\Update\uLibFuncoesUpdate.pas',
+  uCadastroRepository in 'Repository\uCadastroRepository.pas',
+  uCadastroService in 'Service\uCadastroService.pas',
+  LibFuncoes in 'Padrao\Lib\LibFuncoes.pas';
 
 {$R *.res}
 

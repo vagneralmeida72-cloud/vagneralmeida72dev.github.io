@@ -10,7 +10,7 @@ uses
   Datasnap.DBClient, Datasnap.Provider, FireDAC.Comp.Client, FireDAC.Comp.DataSet,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async,
-  FireDAC.DApt;
+  FireDAC.DApt, Vcl.DBCtrls, uCadastroService, uCadastroRepository;
 
 type
   TfrmCadastroBase = class(TForm)
@@ -38,10 +38,14 @@ type
     procedure dsCadastroStateChange(Sender: TObject);
     procedure dbgCadastroTitleClick(Column: TColumn);
     procedure FormShow(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
 
   private
+    FRepository: TCadastroRepository;
+    FService: TCadastroService;
     FSQLOriginal, FTabela: string;
     FConfigurado: Boolean;
+
     procedure P_AtualizarBotoes;
     procedure P_AcaoBotoes(pEdicao: Boolean);
     procedure P_MostrarCadastro;
@@ -49,12 +53,19 @@ type
     procedure P_RecarregarDados;
     procedure P_PesquisarColuna(pField: TField; pTexto: string);
 
+    // Campos obrigatórios
+    procedure P_ConfigurarCamposObrigatorios;
+    procedure P_ConfigurarControlesObrigatorios(pParent: TWinControl);
+    procedure P_CriarAsterisco(pControle: TWinControl);
+    procedure P_ValidarCampoObrigatorio(Sender: TObject);
+    procedure P_AtualizarCorCampo(pControle: TWinControl);
+    function F_ControleObrigatorioVazio(pControle: TWinControl): Boolean;
+    procedure P_ValidarControlesObrigatorios(pParent: TWinControl;
+      var pPrimeiro: TWinControl; var pValido: Boolean);
+    function F_ValidarCamposObrigatorios: Boolean;
+
     function F_MontarSQLPesquisa(pSQL, pCampo: string): string;
-    function F_CriarQuery: TFDQuery;
-    function F_InserirRegistro: Boolean;
-    function F_AlterarRegistro: Boolean;
-    function F_ExcluirRegistro: Boolean;
-    function F_ValorCampo(pField: TField): Variant;
+    procedure P_ConfigurarCampoID;
   public
     procedure P_ConfigurarCadastro(pSQL, pTabela: string);
   end;
@@ -67,7 +78,7 @@ implementation
 {$R *.dfm}
 
 uses
-  uDM;
+  uDM, LibFuncoes;
 
 procedure TfrmCadastroBase.FormCreate(Sender: TObject);
 begin
@@ -87,8 +98,20 @@ begin
   tsCadastro.TabVisible  := False;
   pgcCadastro.ActivePage := tsPesquisa;
 
+  FRepository := TCadastroRepository.Create(DM.FDConnection);
+  FService := nil;
+
   P_AcaoBotoes(False);
   P_AtualizarBotoes;
+end;
+
+procedure TfrmCadastroBase.FormDestroy(Sender: TObject);
+begin
+  FService.Free;
+  FRepository.Free;
+
+  FService := nil;
+  FRepository := nil;
 end;
 
 procedure TfrmCadastroBase.FormShow(Sender: TObject);
@@ -99,14 +122,13 @@ begin
     Exit;
 
   vTabela := Copy(ClassName, 5, Length(ClassName));
-
   vTabela := UpperCase(vTabela);
-
   FTabela := vTabela;
 
   FSQLOriginal := 'SELECT * FROM ' + FTabela + ' ORDER BY ID';
 
   P_ConfigurarCadastro(FSQLOriginal, FTabela);
+  P_ConfigurarCamposObrigatorios;
 
   FConfigurado := True;
 end;
@@ -124,11 +146,30 @@ begin
 
   cdsCadastro.Close;
   qryCadastro.Close;
-
   qryCadastro.SQL.Clear;
   qryCadastro.SQL.Text := FSQLOriginal;
   qryCadastro.Open;
   cdsCadastro.Open;
+
+  P_ConfigurarCampoID;
+
+  FreeAndNil(FService);
+  FService := TCadastroService.Create(FRepository, FTabela);
+end;
+
+procedure TfrmCadastroBase.P_ConfigurarCampoID;
+var
+  vCampoID: TField;
+begin
+  vCampoID := cdsCadastro.FindField('ID');
+
+  if not Assigned(vCampoID) then
+    Exit;
+
+  vCampoID.Required := False;
+  vCampoID.ReadOnly := True;
+
+  vCampoID.AutoGenerateValue := arAutoInc;
 end;
 
 procedure TfrmCadastroBase.btnNovoClick(Sender: TObject);
@@ -136,12 +177,13 @@ var
   I: Integer;
   F: TField;
 begin
-  // NOVO
+  //NOVO
   if cdsCadastro.State = dsBrowse then
   begin
     try
       cdsCadastro.Append;
 
+      //Limpa os campos da inclusão
       for I := 0 to cdsCadastro.FieldCount - 1 do
       begin
         F := cdsCadastro.Fields[I];
@@ -156,85 +198,88 @@ begin
           F.Clear;
       end;
       P_MostrarCadastro;
-      Exit;
     except
       on E: Exception do
       begin
-        ShowMessage('Erro ao iniciar novo registro:' + sLineBreak +
-          E.ClassName + sLineBreak + E.Message);
+        F_Mensagem('Erro ao iniciar novo registro:' +
+          sLineBreak +E.ClassName +sLineBreak +E.Message, tmErro);
       end;
     end;
+    Exit;
   end;
 
-  // SALVAR
+
+  //SALVAR
   if cdsCadastro.State in [dsInsert, dsEdit] then
   begin
     try
+      //Validação visual dos campos obrigatórios
+      if not F_ValidarCamposObrigatorios then
+        Exit;
+
       cdsCadastro.UpdateRecord;
+
       if cdsCadastro.State = dsInsert then
       begin
-        if F_InserirRegistro then
+        if not Assigned(FService) then
+          raise Exception.Create('Service do cadastro não foi inicializado.');
+
+        if FService.F_Inserir(cdsCadastro) then
         begin
           cdsCadastro.Cancel;
           P_RecarregarDados;
           P_MostrarPesquisa;
-          ShowMessage('Registro salvo com sucesso!');
+          F_Mensagem('Registro salvo com sucesso!');
         end;
       end
       else
       begin
-        if F_AlterarRegistro then
+        if not Assigned(FService) then
+          raise Exception.Create('Service do cadastro não foi inicializado.');
+
+        if FService.F_Alterar(cdsCadastro) then
         begin
           cdsCadastro.Cancel;
           P_RecarregarDados;
           P_MostrarPesquisa;
-          ShowMessage('Registro alterado com sucesso!');
+          F_Mensagem('Registro alterado com sucesso!');
         end;
       end;
     except
       on E: Exception do
       begin
-        ShowMessage('Erro ao salvar:' + sLineBreak + E.ClassName +
-          sLineBreak + E.Message);
+        F_Mensagem('Erro ao salvar:' +sLineBreak + E.ClassName +
+          sLineBreak + E.Message, tmErro);
       end;
     end;
   end;
 end;
 
 procedure TfrmCadastroBase.btnAlterarClick(Sender: TObject);
-var
-  vID: Variant;
 begin
   //ALTERAR
   if cdsCadastro.State = dsBrowse then
   begin
     if cdsCadastro.IsEmpty then
     begin
-      ShowMessage('Selecione um registro para alterar.');
+      F_Mensagem('Selecione um registro para alterar.', tmAviso);
       Exit;
     end;
 
-    vID := cdsCadastro.FieldByName('ID').Value;
     try
       cdsCadastro.Edit;
-      if not VarSameValue(cdsCadastro.FieldByName('ID').Value, vID) then
-      begin
-        cdsCadastro.Cancel;
-        ShowMessage('Não foi possível selecionar o registro.');
-        Exit;
-      end;
       P_MostrarCadastro;
     except
       on E: Exception do
       begin
-        ShowMessage('Erro ao editar:' + sLineBreak + E.ClassName +
-          sLineBreak + E.Message);
+        F_Mensagem('Erro ao editar:' + sLineBreak + E.ClassName +
+          sLineBreak + E.Message, tmErro);
       end;
     end;
     Exit;
   end;
 
-  // CANCELAR
+  //CANCELAR
   if cdsCadastro.State in [dsInsert, dsEdit] then
   begin
     try
@@ -243,194 +288,62 @@ begin
     except
       on E: Exception do
       begin
-        ShowMessage('Erro ao cancelar:' + sLineBreak + E.ClassName +
-          sLineBreak + E.Message);
+        F_Mensagem('Erro ao cancelar:' + sLineBreak + E.ClassName +
+          sLineBreak + E.Message, tmErro);
       end;
     end;
   end;
 end;
 
 procedure TfrmCadastroBase.btnExcluirClick(Sender: TObject);
+var
+  vID: Integer;
 begin
-  if cdsCadastro.State <> dsBrowse then
+  if cdsCadastro.IsEmpty then
     Exit;
 
-  if cdsCadastro.IsEmpty then
+  if not Assigned(cdsCadastro.FindField('ID')) then
   begin
-    ShowMessage('Selecione um registro para excluir.');
+    F_Mensagem('O campo ID não foi encontrado.', tmAviso);
     Exit;
   end;
 
-  if MessageDlg('Deseja realmente excluir este registro?', mtConfirmation,
-    [mbYes, mbNo], 0) <> mrYes then
-    Exit;
   try
-    if F_ExcluirRegistro then
-    begin
-      P_RecarregarDados;
-      ShowMessage('Registro excluído com sucesso!');
-    end;
+    vID := cdsCadastro.FieldByName('ID').AsInteger;
   except
     on E: Exception do
     begin
-      ShowMessage('Erro ao excluir:' + sLineBreak + E.ClassName +
-        sLineBreak + E.Message);
+      F_Mensagem('O ID do registro é inválido.' + sLineBreak + E.Message, tmErro);
+      Exit;
     end;
   end;
-end;
 
-function TfrmCadastroBase.F_CriarQuery: TFDQuery;
-begin
-  Result := TFDQuery.Create(nil);
-  Result.Connection := DM.FDConnection;
-end;
-
-function TfrmCadastroBase.F_ValorCampo(pField: TField): Variant;
-begin
-  if pField.IsNull then
-    Result := Null
-  else
-    Result := pField.Value;
-end;
-
-function TfrmCadastroBase.F_InserirRegistro: Boolean;
-var
-  Q: TFDQuery;
-  I: Integer;
-  F: TField;
-  vCampos, vParametros: string;
-begin
-  vCampos     := '';
-  vParametros := '';
-
-  for I := 0 to cdsCadastro.FieldCount - 1 do
+  if vID <= 0 then
   begin
-    F := cdsCadastro.Fields[I];
-
-    // NÃO grava ID
-    if SameText(F.FieldName, 'ID') then
-      Continue;
-
-    // Ignora campos calculados
-    if F.FieldKind <> fkData then
-      Continue;
-
-    if vCampos <> '' then
-    begin
-      vCampos     := vCampos + ', ';
-      vParametros := vParametros + ', ';
-    end;
-
-    vCampos     := vCampos + F.FieldName;
-    vParametros := vParametros + ':' + F.FieldName;
+    F_Mensagem('O ID do registro é inválido.', tmAviso);
+    Exit;
   end;
 
-  if vCampos = '' then
-    raise Exception.Create('Nenhum campo para inserir.');
+  if not F_Confirmar('Deseja realmente excluir este registro?') then
+    Exit;
 
-  Q := F_CriarQuery;
   try
-    Q.SQL.Text := 'INSERT INTO ' + FTabela +
-      ' (' + vCampos + ') VALUES (' + vParametros +')';
+    if not Assigned(FService) then
+      raise Exception.Create('Service do cadastro não foi inicializado.');
 
-    for I := 0 to cdsCadastro.FieldCount - 1 do
+    if FService.F_Excluir(vID) then
     begin
-      F := cdsCadastro.Fields[I];
-      if SameText(F.FieldName, 'ID') then
-        Continue;
-
-      if F.FieldKind <> fkData then
-        Continue;
-
-      Q.ParamByName(F.FieldName).Value := F_ValorCampo(F);
-    end;
-
-    Q.ExecSQL;
-    Result := True;
-  finally
-    Q.Free;
-  end;
-end;
-
-function TfrmCadastroBase.F_AlterarRegistro: Boolean;
-var
-  Q: TFDQuery;
-  I: Integer;
-  F: TField;
-  vID: Variant;
-  vSQL: string;
-  vPrimeiro: Boolean;
-begin
-  cdsCadastro.UpdateRecord;
-
-  vID := cdsCadastro.FieldByName('ID').Value;
-  Q   := F_CriarQuery;
-  try
-    vSQL := 'UPDATE ' + FTabela + ' SET ';
-    vPrimeiro := True;
-
-    for I := 0 to cdsCadastro.FieldCount - 1 do
+      P_RecarregarDados;
+      F_Mensagem('Registro excluído com sucesso!');
+    end
+    else
+      F_Mensagem('Nenhum registro foi excluído.');
+  except
+    on E: Exception do
     begin
-      F := cdsCadastro.Fields[I];
-      if SameText(F.FieldName, 'ID') then
-        Continue;
-
-      if F.FieldKind <> fkData then
-        Continue;
-
-      if not vPrimeiro then
-        vSQL := vSQL + ', ';
-
-      vSQL := vSQL + F.FieldName + ' = :' + F.FieldName;
-      vPrimeiro := False;
+       F_Mensagem('Erro ao excluir:' + sLineBreak + E.ClassName +
+        sLineBreak + E.Message, tmErro);
     end;
-
-    vSQL := vSQL + ' WHERE ID = :ID';
-    Q.SQL.Text := vSQL;
-
-    for I := 0 to cdsCadastro.FieldCount - 1 do
-    begin
-      F := cdsCadastro.Fields[I];
-
-      if SameText(F.FieldName, 'ID') then
-        Continue;
-
-      if F.FieldKind <> fkData then
-        Continue;
-
-      if F.IsNull then
-        Q.ParamByName(F.FieldName).Clear
-      else
-        Q.ParamByName(F.FieldName).Value := F.Value;
-    end;
-
-    Q.ParamByName('ID').Value := vID;
-    Q.ExecSQL;
-
-    if Q.RowsAffected = 0 then
-      raise Exception.Create('Nenhum registro foi alterado.' + sLineBreak +
-        'ID: ' + VarToStr(vID));
-
-    Result := True;
-  finally
-    Q.Free;
-  end;
-end;
-
-function TfrmCadastroBase.F_ExcluirRegistro: Boolean;
-var
-  Q: TFDQuery;
-  vID: Variant;
-begin
-  vID := cdsCadastro.FieldByName('ID').Value;
-  Q   := F_CriarQuery;
-  try
-    Q.SQL.Text := 'DELETE FROM ' + FTabela + ' WHERE ID = :ID';
-    Q.ParamByName('ID').Value := vID;
-    Q.ExecSQL;
-    Result := True;
-  finally
-    Q.Free;
   end;
 end;
 
@@ -438,9 +351,11 @@ procedure TfrmCadastroBase.P_RecarregarDados;
 begin
   cdsCadastro.Close;
   qryCadastro.Close;
+  qryCadastro.SQL.Clear;
   qryCadastro.SQL.Text := FSQLOriginal;
   qryCadastro.Open;
   cdsCadastro.Open;
+  P_ConfigurarCampoID;
 end;
 
 procedure TfrmCadastroBase.P_AtualizarBotoes;
@@ -520,15 +435,11 @@ begin
   begin
     cdsCadastro.Close;
     qryCadastro.Close;
-
     qryCadastro.SQL.Text := FSQLOriginal;
-
     qryCadastro.Open;
     cdsCadastro.Open;
-
     Exit;
   end;
-
   P_PesquisarColuna(vField, vTexto);
 end;
 
@@ -548,21 +459,16 @@ begin
   begin
     cdsCadastro.Close;
     qryCadastro.Close;
-
     qryCadastro.SQL.Text := FSQLOriginal;
-
     qryCadastro.Open;
     cdsCadastro.Open;
-
     Exit;
   end;
 
   cdsCadastro.Close;
   qryCadastro.Close;
-
   qryCadastro.SQL.Text := F_MontarSQLPesquisa(FSQLOriginal, vCampo);
   qryCadastro.ParamByName('PESQUISA').AsString := '%' + Trim(pTexto) + '%';
-
   qryCadastro.Open;
   cdsCadastro.Open;
 end;
@@ -597,6 +503,270 @@ begin
   end
   else
     Result := vSQL + ' WHERE ' + pCampo + ' LIKE :PESQUISA';
+end;
+
+procedure TfrmCadastroBase.P_ConfigurarCamposObrigatorios;
+begin
+  P_ConfigurarControlesObrigatorios(Self);
+end;
+
+procedure TfrmCadastroBase.P_ConfigurarControlesObrigatorios(
+  pParent: TWinControl);
+var
+  I: Integer;
+  vControle: TControl;
+  vWinControl: TWinControl;
+begin
+  if not Assigned(pParent) then
+    Exit;
+
+  for I := 0 to pParent.ControlCount - 1 do
+  begin
+    vControle := pParent.Controls[I];
+
+    if not (vControle is TWinControl) then
+      Continue;
+
+    vWinControl := TWinControl(vControle);
+
+    // Se estiver marcado como obrigatório
+    if vWinControl.Tag = 1 then
+    begin
+      if not vWinControl.Enabled then
+        Continue;
+
+      if not vWinControl.Visible then
+        Continue;
+
+      P_CriarAsterisco(vWinControl);
+
+      // Configura o evento de saída de acordo com o tipo
+      if vWinControl is TDBEdit then
+        TDBEdit(vWinControl).OnExit := P_ValidarCampoObrigatorio
+      else
+      if vWinControl is TDBComboBox then
+        TDBComboBox(vWinControl).OnExit := P_ValidarCampoObrigatorio
+      else
+      if vWinControl is TDBMemo then
+        TDBMemo(vWinControl).OnExit := P_ValidarCampoObrigatorio
+      else
+      if vWinControl is TDBLookupComboBox then
+        TDBLookupComboBox(vWinControl).OnExit := P_ValidarCampoObrigatorio;
+    end;
+
+    // Procura controles dentro de Panels, GroupBoxes, TabSheets etc.
+    P_ConfigurarControlesObrigatorios(vWinControl);
+  end;
+end;
+
+procedure TfrmCadastroBase.P_ValidarCampoObrigatorio(Sender: TObject);
+begin
+  if not (Sender is TWinControl) then
+    Exit;
+
+  P_AtualizarCorCampo(TWinControl(Sender));
+end;
+
+procedure TfrmCadastroBase.P_AtualizarCorCampo(pControle: TWinControl);
+begin
+  if not Assigned(pControle) then
+    Exit;
+
+  if pControle.Tag <> 1 then
+    Exit;
+
+  // TDBEdit
+  if pControle is TDBEdit then
+  begin
+    if Trim(TDBEdit(pControle).Text) = '' then
+      TDBEdit(pControle).Color := $00A5FF
+    else
+      TDBEdit(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  // TDBComboBox
+  if pControle is TDBComboBox then
+  begin
+    if Trim(TDBComboBox(pControle).Text) = '' then
+      TDBComboBox(pControle).Color := $00A5FF
+    else
+      TDBComboBox(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  // TDBMemo
+  if pControle is TDBMemo then
+  begin
+    if Trim(TDBMemo(pControle).Text) = '' then
+      TDBMemo(pControle).Color := $00A5FF
+    else
+      TDBMemo(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  // TDBLookupComboBox
+  if pControle is TDBLookupComboBox then
+  begin
+    if TDBLookupComboBox(pControle).KeyValue = Null then
+      TDBLookupComboBox(pControle).Color := $00A5FF
+    else
+      TDBLookupComboBox(pControle).Color := clWindow;
+    Exit;
+  end;
+end;
+
+function TfrmCadastroBase.F_ControleObrigatorioVazio(pControle: TWinControl): Boolean;
+begin
+  Result := False;
+
+  if not Assigned(pControle) then
+    Exit;
+
+  if pControle.Tag <> 1 then
+    Exit;
+
+  if not pControle.Enabled then
+    Exit;
+
+  if not pControle.Visible then
+    Exit;
+
+  // TDBEdit
+  if pControle is TDBEdit then
+  begin
+    Result := Trim(TDBEdit(pControle).Text) = '';
+    Exit;
+  end;
+
+  // TDBComboBox
+  if pControle is TDBComboBox then
+  begin
+    Result := Trim(TDBComboBox(pControle).Text) = '';
+    Exit;
+  end;
+
+  // TDBMemo
+  if pControle is TDBMemo then
+  begin
+    Result := Trim(TDBMemo(pControle).Text) = '';
+    Exit;
+  end;
+
+  // TDBLookupComboBox
+  if pControle is TDBLookupComboBox then
+  begin
+    Result := VarIsNull(TDBLookupComboBox(pControle).KeyValue);
+    Exit;
+  end;
+end;
+
+procedure TfrmCadastroBase.P_CriarAsterisco(pControle: TWinControl);
+var
+  vAsterisco: TLabel;
+begin
+  if not Assigned(pControle) then
+    Exit;
+
+  if pControle.Tag <> 1 then
+    Exit;
+
+  // Não cria asterisco para controles que não possuem uma representação visual adequada.
+  if not ((pControle is TDBEdit) or (pControle is TDBComboBox) or
+    (pControle is TDBMemo) or (pControle is TDBLookupComboBox)) then
+      Exit;
+
+  if Assigned(FindComponent('lblObrigatorio_' + pControle.Name)) then
+    Exit;
+
+  vAsterisco             := TLabel.Create(Self);
+  vAsterisco.Name        := 'lblObrigatorio_' + pControle.Name;
+  vAsterisco.Parent      := pControle.Parent;
+  vAsterisco.Caption     := '*';
+  vAsterisco.AutoSize    := True;
+  vAsterisco.Transparent := True;
+  vAsterisco.Visible     := True;
+  vAsterisco.ParentFont  := False;
+  vAsterisco.Font.Style  := [fsBold];
+  vAsterisco.Font.Color  := clRed;
+
+  // Usa a fonte do controle concreto
+  if pControle is TDBEdit then
+    vAsterisco.Font.Size := TDBEdit(pControle).Font.Size
+  else
+  if pControle is TDBComboBox then
+    vAsterisco.Font.Size := TDBComboBox(pControle).Font.Size
+  else
+  if pControle is TDBMemo then
+    vAsterisco.Font.Size := TDBMemo(pControle).Font.Size
+  else
+  if pControle is TDBLookupComboBox then
+    vAsterisco.Font.Size := TDBLookupComboBox(pControle).Font.Size;
+
+  // Coloca o * imediatamente antes do campo
+  vAsterisco.Left := pControle.Left - vAsterisco.Width;
+  vAsterisco.Top  := pControle.Top + ((pControle.Height - vAsterisco.Height) div 2);
+  vAsterisco.BringToFront;
+end;
+
+function TfrmCadastroBase.F_ValidarCamposObrigatorios: Boolean;
+var
+  vPrimeiro: TWinControl;
+begin
+  Result    := True;
+  vPrimeiro := nil;
+
+  P_ValidarControlesObrigatorios(Self, vPrimeiro, Result);
+  if not Result then
+  begin
+    F_Mensagem('Preencha os campos obrigatórios.', tmAviso);
+
+    if Assigned(vPrimeiro) then
+      vPrimeiro.SetFocus;
+  end;
+end;
+
+procedure TfrmCadastroBase.P_ValidarControlesObrigatorios(pParent: TWinControl;
+  var pPrimeiro: TWinControl; var pValido: Boolean);
+var
+  I: Integer;
+  vControle: TControl;
+  vWinControl: TWinControl;
+begin
+  if not Assigned(pParent) then
+    Exit;
+
+  for I := 0 to pParent.ControlCount - 1 do
+  begin
+    vControle := pParent.Controls[I];
+
+    if not (vControle is TWinControl) then
+      Continue;
+
+    vWinControl := TWinControl(vControle);
+
+    // Verifica se é obrigatório
+    if vWinControl.Tag = 1 then
+    begin
+      if vWinControl.Enabled and vWinControl.Visible then
+      begin
+        if F_ControleObrigatorioVazio(vWinControl) then
+        begin
+          pValido := False;
+
+          // Pinta o campo vazio
+          P_AtualizarCorCampo(vWinControl);
+
+          // Guarda o primeiro campo vazio
+          if not Assigned(pPrimeiro) then
+            pPrimeiro := vWinControl;
+        end
+        else
+          P_AtualizarCorCampo(vWinControl);
+      end;
+    end;
+    P_ValidarControlesObrigatorios(vWinControl, pPrimeiro, pValido);
+  end;
 end;
 
 end.

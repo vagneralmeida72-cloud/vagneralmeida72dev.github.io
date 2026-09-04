@@ -1,0 +1,218 @@
+unit uCadastroRepository;
+
+interface
+
+uses
+  System.SysUtils, System.Variants, Data.DB, FireDAC.Comp.Client,
+  FireDAC.Stan.Param;
+
+type
+  TCadastroRepository = class
+  private
+    FConnection: TFDConnection;
+
+  public
+    constructor Create(pConnection: TFDConnection);
+
+    function F_Inserir(pTabela: string; pDataSet: TDataSet): Boolean;
+    function F_Alterar(pTabela: string; pDataSet: TDataSet): Boolean;
+    function F_Excluir(pTabela: string; pID: Variant): Boolean;
+  end;
+
+implementation
+
+{ TCadastroRepository }
+
+constructor TCadastroRepository.Create(pConnection: TFDConnection);
+begin
+  if not Assigned(pConnection) then
+    raise Exception.Create('A conexão com o banco não foi informada.');
+  FConnection := pConnection;
+end;
+
+function TCadastroRepository.F_Inserir(pTabela: string; pDataSet: TDataSet): Boolean;
+var
+  Q: TFDQuery;
+  I: Integer;
+  F: TField;
+  vCampos, vParametros: string;
+begin
+  if Trim(pTabela) = '' then
+    raise Exception.Create('A tabela não foi informada.');
+
+  if not Assigned(pDataSet) then
+    raise Exception.Create('O DataSet não foi informado.');
+
+  vCampos := '';
+  vParametros := '';
+
+  for I := 0 to pDataSet.FieldCount - 1 do
+  begin
+    F := pDataSet.Fields[I];
+
+    // ID é gerado pelo Firebird
+    if SameText(F.FieldName, 'ID') then
+      Continue;
+
+    // Ignora campos calculados
+    if F.FieldKind <> fkData then
+      Continue;
+
+    if vCampos <> '' then
+    begin
+      vCampos := vCampos + ', ';
+      vParametros := vParametros + ', ';
+    end;
+
+    vCampos := vCampos + F.FieldName;
+    vParametros := vParametros + ':' + F.FieldName;
+  end;
+
+  if vCampos = '' then
+    raise Exception.Create('Nenhum campo disponível para inserção.');
+
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := FConnection;
+
+    Q.SQL.Text := 'INSERT INTO ' + pTabela + ' (' + vCampos + ')' +
+      ' VALUES (' + vParametros + ')';
+
+    for I := 0 to pDataSet.FieldCount - 1 do
+    begin
+      F := pDataSet.Fields[I];
+
+      if SameText(F.FieldName, 'ID') then
+        Continue;
+
+      if F.FieldKind <> fkData then
+        Continue;
+
+      if F.IsNull then
+        Q.ParamByName(F.FieldName).Clear
+      else
+        Q.ParamByName(F.FieldName).Value := F.Value;
+    end;
+
+    Q.ExecSQL;
+
+    Result := True;
+  finally
+    Q.Free;
+  end;
+end;
+
+function TCadastroRepository.F_Alterar(pTabela: string; pDataSet: TDataSet): Boolean;
+var
+  Q: TFDQuery;
+  I: Integer;
+  F: TField;
+  vID: Variant;
+  vSQL: string;
+  vPrimeiro: Boolean;
+begin
+  if Trim(pTabela) = '' then
+    raise Exception.Create('A tabela não foi informada.');
+
+  if not Assigned(pDataSet) then
+    raise Exception.Create('O DataSet não foi informado.');
+
+  if not Assigned(pDataSet.FindField('ID')) then
+    raise Exception.Create('O campo ID não foi encontrado.');
+
+  vID := pDataSet.FieldByName('ID').Value;
+
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := FConnection;
+
+    vSQL := 'UPDATE ' + pTabela + ' SET ';
+    vPrimeiro := True;
+
+    for I := 0 to pDataSet.FieldCount - 1 do
+    begin
+      F := pDataSet.Fields[I];
+
+      if SameText(F.FieldName, 'ID') then
+        Continue;
+
+      if F.FieldKind <> fkData then
+        Continue;
+
+      if not vPrimeiro then
+        vSQL := vSQL + ', ';
+
+      vSQL := vSQL +
+        F.FieldName + ' = :' + F.FieldName;
+
+      vPrimeiro := False;
+    end;
+
+    vSQL := vSQL + ' WHERE ID = :ID';
+
+    Q.SQL.Text := vSQL;
+
+    for I := 0 to pDataSet.FieldCount - 1 do
+    begin
+      F := pDataSet.Fields[I];
+
+      if SameText(F.FieldName, 'ID') then
+        Continue;
+
+      if F.FieldKind <> fkData then
+        Continue;
+
+      if F.IsNull then
+        Q.ParamByName(F.FieldName).Clear
+      else
+        Q.ParamByName(F.FieldName).Value := F.Value;
+    end;
+
+    Q.ParamByName('ID').Value := vID;
+
+    Q.ExecSQL;
+
+    if Q.RowsAffected = 0 then
+      raise Exception.Create('Nenhum registro foi alterado.');
+
+    Result := True;
+  finally
+    Q.Free;
+  end;
+end;
+
+function TCadastroRepository.F_Excluir(pTabela: string; pID: Variant): Boolean;
+var
+  Q: TFDQuery;
+  vID: Integer;
+begin
+  if Trim(pTabela) = '' then
+    raise Exception.Create('A tabela não foi informada.');
+
+  if VarIsNull(pID) or VarIsEmpty(pID) then
+    raise Exception.Create('O ID não foi informado.');
+
+  try
+    if VarIsStr(pID) then
+      vID := StrToInt(Trim(VarToStr(pID)))
+    else
+      vID := VarAsType(pID, varInteger);
+  except
+    on E: Exception do
+      raise Exception.Create('ID inválido para exclusão: ' + VarToStr(pID));
+  end;
+
+  Q := TFDQuery.Create(nil);
+  try
+    Q.Connection := FConnection;
+    Q.SQL.Text   := 'DELETE FROM ' + pTabela + ' WHERE ID = :ID';
+    Q.ParamByName('ID').AsInteger := vID;
+    Q.ExecSQL;
+
+    Result := Q.RowsAffected > 0;
+  finally
+    Q.Free;
+  end;
+end;
+
+end.

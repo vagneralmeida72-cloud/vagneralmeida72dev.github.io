@@ -141,9 +141,12 @@
             <Form>DM</Form>
             <DesignClass>TDataModule</DesignClass>
         </DCCReference>
-        <DCCReference Include="Services\uClienteService.pas"/>
+        <DCCReference Include="Service\uClienteService.pas"/>
         <DCCReference Include="Padrao\Update\uUpdate.pas"/>
         <DCCReference Include="Padrao\Update\uLibFuncoesUpdate.pas"/>
+        <DCCReference Include="Repository\uCadastroRepository.pas"/>
+        <DCCReference Include="Service\uCadastroService.pas"/>
+        <DCCReference Include="Padrao\Lib\LibFuncoes.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
