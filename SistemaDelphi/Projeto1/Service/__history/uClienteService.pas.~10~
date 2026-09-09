@@ -1,0 +1,104 @@
+unit uClienteService;
+
+interface
+
+uses
+  System.SysUtils,
+  FireDAC.Comp.Client,
+  FireDAC.Stan.Param,
+  LibFuncoes;
+
+type
+  TClienteService = class
+  public
+    class procedure P_Validar(
+      pNome,
+      pCPF,
+      pEmail: string;
+      pID: Integer;
+      pConnection: TFDConnection
+    );
+  end;
+
+implementation
+
+class procedure TClienteService.P_Validar(
+  pNome,
+  pCPF,
+  pEmail: string;
+  pID: Integer;
+  pConnection: TFDConnection
+);
+var
+  qry: TFDQuery;
+begin
+  // ==========================================
+  // VALIDA CONEXÃO
+  // ==========================================
+
+  if not Assigned(pConnection) then
+  begin
+    F_Mensagem(
+      'Conexão com o banco de dados não informada.',
+      tmErro
+    );
+    Exit;
+  end;
+
+  qry := TFDQuery.Create(nil);
+  try
+    qry.Connection := pConnection;
+
+    // VALIDA NOME E CPF
+    if Trim(pNome) <> '' then
+    begin
+      qry.SQL.Text := 'SELECT NOME, CPF FROM CLIENTE ' +
+        'WHERE UPPER(TRIM(NOME)) = UPPER(TRIM(:NOME)) ' +
+        'AND TRIM(CPF) = TRIM(:CPF) ' +
+        'AND ID <> :ID';
+
+      qry.ParamByName('NOME').AsString := Trim(pNome);
+      qry.ParamByName('CPF').AsString := Trim(pCPF);
+      qry.ParamByName('ID').AsInteger := pID;
+
+      qry.Open;
+
+       if not qry.IsEmpty then
+      begin
+        F_Mensagem('Já existe o cliente ' + qry.Fields[0].AsString +
+          'cadastrado com este nome e CPF!', tmAviso);
+        abort;
+      end;
+
+      qry.Close;
+    end;
+
+    // VALIDA CPF
+    if Trim(pCPF) <> '' then
+    begin
+      qry.SQL.Text := 'SELECT NOME, CPF FROM CLIENTE ' +
+        'WHERE TRIM(CPF) = TRIM(:CPF) ' +
+        'AND ID <> :ID';
+
+      qry.ParamByName('CPF').AsString := Trim(pCPF);
+      qry.ParamByName('ID').AsInteger := pID;
+
+      qry.Open;
+
+      if not qry.IsEmpty then
+      begin
+        F_Mensagem('Já existe o cliente ' + qry.Fields[0].AsString +
+          'cadastrado com este CPF!', tmAviso);
+        abort;
+      end;
+
+      qry.Close;
+    end;
+  finally
+    qry.Free;
+  end;
+end;
+
+end.
+
+

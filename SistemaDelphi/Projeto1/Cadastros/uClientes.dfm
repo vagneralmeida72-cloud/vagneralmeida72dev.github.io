@@ -6,7 +6,6 @@
     StyleElements = [seFont, seClient, seBorder]
   end
   inherited pgcCadastro: TPageControl
-    ActivePage = tsCadastro
     inherited tsCadastro: TTabSheet
       inherited pnlCadastro: TPanel
         StyleElements = [seFont, seClient, seBorder]
@@ -78,6 +77,7 @@
           TabOrder = 2
         end
         object edtCPF: TDBEdit
+          Tag = 1
           Left = 82
           Top = 96
           Width = 121

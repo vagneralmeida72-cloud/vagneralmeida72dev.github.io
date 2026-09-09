@@ -3,29 +3,15 @@ unit uClientes;
 interface
 
 uses
-  Winapi.Windows,
-  Winapi.Messages,
-  System.SysUtils,
-  System.Variants,
-  System.Classes,
-
-  Vcl.Graphics,
-  Vcl.Controls,
-  Vcl.Forms,
-  Vcl.Dialogs,
-
-  uFrmCadastroBase,
-
-  Data.DB,
-
-  Vcl.StdCtrls,
-  Vcl.ExtCtrls,
-  Vcl.Mask,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  uFrmCadastroBase, Data.DB, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Mask,
   Vcl.DBCtrls, FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
   FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
   FireDAC.Stan.Async, FireDAC.DApt, System.ImageList, Vcl.ImgList,
   Datasnap.Provider, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
-  Datasnap.DBClient, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Buttons;
+  Datasnap.DBClient, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Buttons,
+  uClienteService, uDM;
 
 type
   TfrmCliente = class(TfrmCadastroBase)
@@ -34,14 +20,17 @@ type
     Label3: TLabel;
     Label4: TLabel;
     Label1: TLabel;
-
     edtCodigo: TDBEdit;
     edtNome: TDBEdit;
     edtEmail: TDBEdit;
     edtCPF: TDBEdit;
     edtTelefone: TDBEdit;
+    procedure btnNovoClick(Sender: TObject);
   private
+    function F_ValidarCliente: Boolean;
+    //
   public
+    //
   end;
 
 var
@@ -50,5 +39,33 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TfrmCliente.btnNovoClick(Sender: TObject);
+begin
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    //Validação visual dos campos obrigatórios
+    if not F_ValidarCamposObrigatorios then
+      Exit;
+
+    if not F_ValidarCliente then
+      Exit;
+  end;
+  inherited;
+
+end;
+
+function TfrmCliente.F_ValidarCliente: Boolean;
+var
+  vID: Integer;
+begin
+  vID := 0;
+
+  if cdsCadastro.State = dsEdit then
+    vID := cdsCadastro.FieldByName('ID').AsInteger;
+
+  Result := TClienteService.F_Validar(edtNome.Text, edtCPF.Text,
+    edtEmail.Text, vID, DM.FDConnection);
+end;
 
 end.

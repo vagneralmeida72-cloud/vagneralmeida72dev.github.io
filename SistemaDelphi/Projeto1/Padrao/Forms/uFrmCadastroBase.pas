@@ -57,15 +57,19 @@ type
     procedure P_ConfigurarCamposObrigatorios;
     procedure P_ConfigurarControlesObrigatorios(pParent: TWinControl);
     procedure P_CriarAsterisco(pControle: TWinControl);
-    procedure P_ValidarCampoObrigatorio(Sender: TObject);
     procedure P_AtualizarCorCampo(pControle: TWinControl);
     function F_ControleObrigatorioVazio(pControle: TWinControl): Boolean;
     procedure P_ValidarControlesObrigatorios(pParent: TWinControl;
       var pPrimeiro: TWinControl; var pValido: Boolean);
-    function F_ValidarCamposObrigatorios: Boolean;
 
     function F_MontarSQLPesquisa(pSQL, pCampo: string): string;
     procedure P_ConfigurarCampoID;
+    function F_CampoOrigem(pField: TField): string;
+    procedure P_LimparCoresCamposObrigatorios(pParent: TWinControl);
+
+  protected
+    function F_ValidarCamposObrigatorios: Boolean;
+
   public
     procedure P_ConfigurarCadastro(pSQL, pTabela: string);
   end;
@@ -197,6 +201,7 @@ begin
         if not F.ReadOnly then
           F.Clear;
       end;
+      P_LimparCoresCamposObrigatorios(Self);
       P_MostrarCadastro;
     except
       on E: Exception do
@@ -425,21 +430,18 @@ begin
   if not Assigned(vField) then
     Exit;
 
-  if Trim(vField.FieldName) = '' then
+  if F_CampoOrigem(vField) = '' then
     Exit;
 
   vTexto := InputBox('Pesquisar', 'Pesquisar em ' + vField.DisplayLabel, '');
 
   // Se deixar vazio, volta para o SELECT original
-  if Trim(vTexto) = '' then
+ if Trim(vTexto) = '' then
   begin
-    cdsCadastro.Close;
-    qryCadastro.Close;
-    qryCadastro.SQL.Text := FSQLOriginal;
-    qryCadastro.Open;
-    cdsCadastro.Open;
+    P_RecarregarDados;
     Exit;
   end;
+
   P_PesquisarColuna(vField, vTexto);
 end;
 
@@ -450,18 +452,15 @@ begin
   if not Assigned(pField) then
     Exit;
 
-  vCampo := Trim(pField.FieldName);
+  // Pega o campo REAL do banco
+  vCampo := F_CampoOrigem(pField);
 
   if vCampo = '' then
     Exit;
 
   if Trim(pTexto) = '' then
   begin
-    cdsCadastro.Close;
-    qryCadastro.Close;
-    qryCadastro.SQL.Text := FSQLOriginal;
-    qryCadastro.Open;
-    cdsCadastro.Open;
+    P_RecarregarDados;
     Exit;
   end;
 
@@ -510,8 +509,7 @@ begin
   P_ConfigurarControlesObrigatorios(Self);
 end;
 
-procedure TfrmCadastroBase.P_ConfigurarControlesObrigatorios(
-  pParent: TWinControl);
+procedure TfrmCadastroBase.P_ConfigurarControlesObrigatorios(pParent: TWinControl);
 var
   I: Integer;
   vControle: TControl;
@@ -529,7 +527,6 @@ begin
 
     vWinControl := TWinControl(vControle);
 
-    // Se estiver marcado como obrigatório
     if vWinControl.Tag = 1 then
     begin
       if not vWinControl.Enabled then
@@ -539,32 +536,10 @@ begin
         Continue;
 
       P_CriarAsterisco(vWinControl);
-
-      // Configura o evento de saída de acordo com o tipo
-      if vWinControl is TDBEdit then
-        TDBEdit(vWinControl).OnExit := P_ValidarCampoObrigatorio
-      else
-      if vWinControl is TDBComboBox then
-        TDBComboBox(vWinControl).OnExit := P_ValidarCampoObrigatorio
-      else
-      if vWinControl is TDBMemo then
-        TDBMemo(vWinControl).OnExit := P_ValidarCampoObrigatorio
-      else
-      if vWinControl is TDBLookupComboBox then
-        TDBLookupComboBox(vWinControl).OnExit := P_ValidarCampoObrigatorio;
     end;
 
-    // Procura controles dentro de Panels, GroupBoxes, TabSheets etc.
     P_ConfigurarControlesObrigatorios(vWinControl);
   end;
-end;
-
-procedure TfrmCadastroBase.P_ValidarCampoObrigatorio(Sender: TObject);
-begin
-  if not (Sender is TWinControl) then
-    Exit;
-
-  P_AtualizarCorCampo(TWinControl(Sender));
 end;
 
 procedure TfrmCadastroBase.P_AtualizarCorCampo(pControle: TWinControl);
@@ -766,6 +741,72 @@ begin
       end;
     end;
     P_ValidarControlesObrigatorios(vWinControl, pPrimeiro, pValido);
+  end;
+end;
+
+function TfrmCadastroBase.F_CampoOrigem(pField: TField): string;
+var
+  vOrigin: string;
+  vPos: Integer;
+begin
+  Result := '';
+
+  if not Assigned(pField) then
+    Exit;
+
+  vOrigin := Trim(pField.Origin);
+
+  if vOrigin <> '' then
+  begin
+    vPos := LastDelimiter('.', vOrigin);
+
+    if vPos > 0 then
+      Result := Copy(vOrigin, vPos + 1, MaxInt)
+    else
+      Result := vOrigin;
+  end;
+
+  // Segurança: se o Origin não estiver disponível
+  if Result = '' then
+    Result := pField.FieldName;
+end;
+
+procedure TfrmCadastroBase.P_LimparCoresCamposObrigatorios(pParent: TWinControl);
+var
+  I: Integer;
+  vControle: TControl;
+  vWinControl: TWinControl;
+begin
+  if not Assigned(pParent) then
+    Exit;
+
+  for I := 0 to pParent.ControlCount - 1 do
+  begin
+    vControle := pParent.Controls[I];
+
+    if not (vControle is TWinControl) then
+      Continue;
+
+    vWinControl := TWinControl(vControle);
+
+    // Campos obrigatórios
+    if vWinControl.Tag = 1 then
+    begin
+      if vWinControl is TDBEdit then
+        TDBEdit(vWinControl).Color := clWindow
+      else
+      if vWinControl is TDBComboBox then
+        TDBComboBox(vWinControl).Color := clWindow
+      else
+      if vWinControl is TDBMemo then
+        TDBMemo(vWinControl).Color := clWindow
+      else
+      if vWinControl is TDBLookupComboBox then
+        TDBLookupComboBox(vWinControl).Color := clWindow;
+    end;
+
+    // Procura controles internos
+    P_LimparCoresCamposObrigatorios(vWinControl);
   end;
 end;
 

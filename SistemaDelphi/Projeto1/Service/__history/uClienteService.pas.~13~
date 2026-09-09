@@ -1,0 +1,88 @@
+unit uClienteService;
+
+interface
+
+uses
+  System.SysUtils, FireDAC.Comp.Client, FireDAC.Stan.Param, Data.DB, LibFuncoes;
+
+type
+  TClienteService = class
+  public
+    class function F_Validar(pNome, pCPF, pEmail: string;
+      pID: Integer; pConnection: TFDConnection
+    ): Boolean;
+  end;
+
+implementation
+
+class function TClienteService.F_Validar(pNome, pCPF, pEmail: string;
+  pID: Integer; pConnection: TFDConnection
+): Boolean;
+var
+  vQry: TFDQuery;
+begin
+  Result := False;
+
+  if not Assigned(pConnection) then
+  begin
+    F_Mensagem('Conexão com o banco de dados não informada.', tmErro);
+    Exit;
+  end;
+
+  vQry := TFDQuery.Create(nil);
+  try
+    vQry.Connection := pConnection;
+
+    // VALIDA NOME E CPF
+    if Trim(pNome) <> '' then
+    begin
+      vQry.SQL.Text := 'SELECT NOME, CPF FROM CLIENTE ' +
+        'WHERE UPPER(TRIM(NOME)) = UPPER(TRIM(:NOME)) ' +
+        'AND TRIM(CPF) = TRIM(:CPF) ' +
+        'AND ID <> :ID';
+
+      vQry.ParamByName('NOME').AsString := Trim(pNome);
+      vQry.ParamByName('CPF').AsString := Trim(pCPF);
+      vQry.ParamByName('ID').AsInteger := pID;
+
+      vQry.Open;
+
+      if not vQry.IsEmpty then
+      begin
+        F_Mensagem('Já existe o cliente ' + vQry.Fields[0].AsString +
+          'cadastrado com este nome e CPF!', tmAviso);
+        Exit;
+      end;
+
+      vQry.Close;
+    end;
+
+    // VALIDA CPF
+    if Trim(pCPF) <> '' then
+    begin
+      vQry.SQL.Text := 'SELECT NOME, CPF FROM CLIENTE ' +
+        'WHERE TRIM(CPF) = TRIM(:CPF) ' +
+        'AND ID <> :ID';
+
+      vQry.ParamByName('CPF').AsString := Trim(pCPF);
+      vQry.ParamByName('ID').AsInteger := pID;
+
+      vQry.Open;
+
+      if not vQry.IsEmpty then
+      begin
+        F_Mensagem('Já existe o cliente ' + vQry.Fields[0].AsString +
+          'cadastrado com este CPF!', tmAviso);
+        Exit;
+      end;
+
+      vQry.Close;
+    end;
+  finally
+    vQry.Free;
+  end;
+end;
+
+end.
+
+
