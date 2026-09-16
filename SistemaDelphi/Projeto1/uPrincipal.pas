@@ -15,14 +15,18 @@ type
     miCadastros: TMenuItem;
     miMovimentacoes: TMenuItem;
     miRelatrios: TMenuItem;
-    miUsuarios: TMenuItem;
     miClientes: TMenuItem;
     miVendas: TMenuItem;
     RelClientes: TMenuItem;
     RelVendas: TMenuItem;
     imgPrincipal: TImage;
+    mnuAssistenteIA: TMenuItem;
+    ConsultaAPI1: TMenuItem;
+    Servios1: TMenuItem;
+    ApiHorse1: TMenuItem;
     procedure miSairClick(Sender: TObject);
     procedure miClientesClick(Sender: TObject);
+    procedure mnuAssistenteIAClick(Sender: TObject);
   private
     procedure P_CriaForm(AFormClass: TFormClass);
     { Private declarations }
@@ -36,7 +40,7 @@ var
 implementation
 
 uses
-  uClientes;
+  uClientes, ufrmIA;
 
 {$R *.dfm}
 
@@ -48,6 +52,18 @@ end;
 procedure TfrmPrincipal.miSairClick(Sender: TObject);
 begin
   Close;
+end;
+
+procedure TfrmPrincipal.mnuAssistenteIAClick(Sender: TObject);
+var
+  FrmIA: TfrmIA;
+begin
+  FrmIA := TfrmIA.Create(Self);
+  try
+    FrmIA.ShowModal;
+  finally
+    FrmIA.Free;
+  end;
 end;
 
 procedure TfrmPrincipal.P_CriaForm(AFormClass: TFormClass);

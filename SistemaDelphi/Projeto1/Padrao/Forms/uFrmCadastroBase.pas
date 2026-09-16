@@ -66,6 +66,7 @@ type
     procedure P_ConfigurarCampoID;
     function F_CampoOrigem(pField: TField): string;
     procedure P_LimparCoresCamposObrigatorios(pParent: TWinControl);
+    procedure P_ConfigurarTitulosGrid;
 
   protected
     function F_ValidarCamposObrigatorios: Boolean;
@@ -361,6 +362,11 @@ begin
   qryCadastro.Open;
   cdsCadastro.Open;
   P_ConfigurarCampoID;
+  P_ConfigurarTitulosGrid;
+
+  // Libera novamente a navegação da Grid
+  dbgCadastro.Enabled  := True;
+  dbgCadastro.ReadOnly := True;
 end;
 
 procedure TfrmCadastroBase.P_AtualizarBotoes;
@@ -807,6 +813,18 @@ begin
 
     // Procura controles internos
     P_LimparCoresCamposObrigatorios(vWinControl);
+  end;
+end;
+
+procedure TfrmCadastroBase.P_ConfigurarTitulosGrid;
+var
+  I: Integer;
+begin
+  for I := 0 to dbgCadastro.Columns.Count - 1 do
+  begin
+    if Assigned(dbgCadastro.Columns[I].Field) then
+      dbgCadastro.Columns[I].Title.Caption :=
+        dbgCadastro.Columns[I].Field.DisplayLabel;
   end;
 end;
 

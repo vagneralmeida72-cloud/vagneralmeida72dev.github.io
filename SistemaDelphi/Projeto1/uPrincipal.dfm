@@ -59383,7 +59383,17 @@ object frmPrincipal: TfrmPrincipal
     Left = 24
     Top = 24
     object miConfiguracoes: TMenuItem
-      Caption = 'Configura'#231#245'es'
+      Caption = 'Sistema'
+      object mnuAssistenteIA: TMenuItem
+        Caption = 'Assistente IA'
+        OnClick = mnuAssistenteIAClick
+      end
+      object ConsultaAPI1: TMenuItem
+        Caption = 'Consulta API'
+      end
+      object ApiHorse1: TMenuItem
+        Caption = 'Consulta Horse'
+      end
       object miSair: TMenuItem
         Caption = 'Sair'
         OnClick = miSairClick
@@ -59391,12 +59401,12 @@ object frmPrincipal: TfrmPrincipal
     end
     object miCadastros: TMenuItem
       Caption = 'Cadastros'
-      object miUsuarios: TMenuItem
-        Caption = 'Usu'#225'rios'
-      end
       object miClientes: TMenuItem
         Caption = 'Clientes'
         OnClick = miClientesClick
+      end
+      object Servios1: TMenuItem
+        Caption = 'Servi'#231'os'
       end
     end
     object miMovimentacoes: TMenuItem

@@ -1,0 +1,23 @@
+unit uIAConfig;
+
+interface
+
+type
+  TIAConfig = record
+    API: string;
+    ModoTeste: Boolean;
+    Modelo: string;
+  end;
+
+function ObterConfigIA: TIAConfig;
+
+implementation
+
+function ObterConfigIA: TIAConfig;
+begin
+  Result.API := '';
+  Result.ModoTeste := True;
+  Result.Modelo := 'gpt-5.6-luna';
+end;
+
+end.

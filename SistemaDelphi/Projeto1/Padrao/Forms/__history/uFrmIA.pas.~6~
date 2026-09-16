@@ -1,0 +1,138 @@
+unit uFrmIA;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  Vcl.StdCtrls, Vcl.ExtCtrls, System.JSON, System.Net.HttpClient,
+  System.Net.URLClient;
+
+type
+  TfrmIA = class(TForm)
+    Panel1: TPanel;
+    Panel2: TPanel;
+    lblPergunta: TLabel;
+    lblResposta: TLabel;
+    memPergunta: TMemo;
+    memResposta: TMemo;
+    btnPerguntar: TButton;
+    btnSair: TButton;
+    procedure btnSairClick(Sender: TObject);
+    procedure btnPerguntarClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmIA: TfrmIA;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmIA.btnPerguntarClick(Sender: TObject);
+var
+  vHTTP: THTTPClient;
+  vResponse: IHTTPResponse;
+  vJSONEnvio: TJSONObject;
+  vJSONResposta: TJSONObject;
+  vBody: TStringStream;
+  vAPI: string;
+begin
+  if Trim(memPergunta.Text) = '' then
+  begin
+    ShowMessage('Digite uma pergunta.');
+    Exit;
+  end;
+
+  vAPI := 'COLOQUE_SUA_API_KEY_AQUI';
+
+  vHTTP := THTTPClient.Create;
+  vJSONEnvio := TJSONObject.Create;
+  vBody := nil;
+
+  try
+    vJSONEnvio.AddPair('model', 'gpt-5.6-luna');
+
+    vJSONEnvio.AddPair('input', memPergunta.Text);
+
+    vHTTP.CustomHeaders['Authorization'] := 'Bearer ' + vAPI;
+
+    vHTTP.CustomHeaders['Content-Type'] := 'application/json';
+
+    vBody := TStringStream.Create(vJSONEnvio.ToJSON, TEncoding.UTF8);
+
+    vResponse := vHTTP.Post('https://api.openai.com/v1/responses', vBody);
+
+    if (vResponse.StatusCode < 200) or (vResponse.StatusCode >= 300) then
+    begin
+      raise Exception.Create('Erro na API.' + sLineBreak +
+        'Código: ' + vResponse.StatusCode.ToString + sLineBreak +
+        vResponse.ContentAsString);
+    end;
+
+    vJSONResposta := TJSONObject.ParseJSONValue(vResponse.ContentAsString) as TJSONObject;
+
+    try
+      memResposta.Lines.Text := vJSONResposta.GetValue<string>('output_text');
+    finally
+      vJSONResposta.Free;
+    end;
+
+  finally
+    vBody.Free;
+    vJSONEnvio.Free;
+    vHTTP.Free;
+  end;
+end;
+
+procedure TfrmIA.btnSairClick(Sender: TObject);
+begin
+  Close;
+end;
+
+function PerguntarIA(pPergunta: string): string;
+var
+  vHTTP: THTTPClient;
+  vResponse: IHTTPResponse;
+  vJSONEnvio: TJSONObject;
+  vJSONResposta: TJSONObject;
+  vAPI: string;
+begin
+  vAPI := 'SUA_CHAVE_API_AQUI';
+
+  vHTTP := THTTPClient.Create;
+  vJSONEnvio := TJSONObject.Create;
+
+  try
+    vJSONEnvio.AddPair('model', 'gpt-5.6');
+    vJSONEnvio.AddPair('input', pPergunta);
+
+    vHTTP.CustomHeaders['Authorization'] := 'Bearer ' + vAPI;
+    vHTTP.CustomHeaders['Content-Type'] := 'application/json';
+
+    vResponse := vHTTP.Post('https://api.openai.com/v1/responses',
+      TStringStream.Create(vJSONEnvio.ToJSON, TEncoding.UTF8));
+
+    if vResponse.StatusCode <> 200 then
+      raise Exception.Create('Erro na API: ' + vResponse.StatusCode.ToString +
+        ' - ' + vResponse.StatusText);
+
+    vJSONResposta := TJSONObject.ParseJSONValue(vResponse.ContentAsString) as TJSONObject;
+
+    try
+      Result := vJSONResposta.GetValue<string>('output_text');
+    finally
+      vJSONResposta.Free;
+    end;
+
+  finally
+    vJSONEnvio.Free;
+    vHTTP.Free;
+  end;
+end;
+
+end.

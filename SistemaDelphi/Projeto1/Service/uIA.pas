@@ -1,0 +1,91 @@
+unit uIA;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, System.JSON, System.Net.HttpClient,
+  System.Net.URLClient;
+
+type
+  TIA = class
+  private
+    FAPI: string;
+    FModoTeste: Boolean;
+  public
+    constructor Create(pAPI: string);
+    function F_Perguntar(pPergunta: string): string;
+    property ModoTeste: Boolean read FModoTeste write FModoTeste;
+  end;
+
+implementation
+
+constructor TIA.Create(pAPI: string);
+begin
+  inherited Create;
+
+  FAPI := pAPI;
+  FModoTeste := True;
+end;
+
+function TIA.F_Perguntar(pPergunta: string): string;
+var
+  vHTTP: THTTPClient;
+  vResponse: IHTTPResponse;
+  vJSONEnvio: TJSONObject;
+  vJSONResposta: TJSONObject;
+  vBody: TStringStream;
+begin
+
+  if FModoTeste then
+  begin
+    Result :=
+      '[MODO TESTE]' + sLineBreak + sLineBreak +
+      'Pergunta recebida:' + sLineBreak +
+      pPergunta + sLineBreak + sLineBreak +
+      'Resposta simulada:' + sLineBreak +
+      'Esta é uma resposta de teste do Assistente IA.' + sLineBreak +
+      'A comunicação com a API ainda não está sendo utilizada.';
+
+    Exit;
+  end;
+
+  Result := '';
+
+  vHTTP := THTTPClient.Create;
+  vJSONEnvio := TJSONObject.Create;
+  vBody := nil;
+
+  try
+    vJSONEnvio.AddPair('model', 'gpt-5.6-luna');
+    vJSONEnvio.AddPair('input', pPergunta);
+
+    vHTTP.CustomHeaders['Authorization'] := 'Bearer ' + FAPI;
+
+    vHTTP.CustomHeaders['Content-Type'] := 'application/json';
+
+    vBody := TStringStream.Create(vJSONEnvio.ToJSON, TEncoding.UTF8);
+
+    vResponse := vHTTP.Post('https://api.openai.com/v1/responses', vBody);
+
+    if (vResponse.StatusCode < 200) or (vResponse.StatusCode >= 300) then
+    begin
+      raise Exception.Create('Erro na API da IA.' + sLineBreak +
+        'Código: ' + vResponse.StatusCode.ToString + sLineBreak +
+        vResponse.ContentAsString);
+    end;
+
+    vJSONResposta := TJSONObject.ParseJSONValue(vResponse.ContentAsString) as TJSONObject;
+    try
+      Result := vJSONResposta.GetValue<string>('output_text');
+    finally
+      vJSONResposta.Free;
+    end;
+
+  finally
+    vBody.Free;
+    vJSONEnvio.Free;
+    vHTTP.Free;
+  end;
+end;
+
+end.

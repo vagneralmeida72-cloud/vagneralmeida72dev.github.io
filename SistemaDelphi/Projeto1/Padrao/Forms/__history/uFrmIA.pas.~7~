@@ -1,0 +1,60 @@
+unit uFrmIA;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs,
+  Vcl.StdCtrls, Vcl.ExtCtrls, System.JSON, System.Net.HttpClient,
+  System.Net.URLClient, uIA;
+
+type
+  TfrmIA = class(TForm)
+    Panel1: TPanel;
+    Panel2: TPanel;
+    lblPergunta: TLabel;
+    lblResposta: TLabel;
+    memPergunta: TMemo;
+    memResposta: TMemo;
+    btnPerguntar: TButton;
+    btnSair: TButton;
+    procedure btnSairClick(Sender: TObject);
+    procedure btnPerguntarClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmIA: TfrmIA;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmIA.btnPerguntarClick(Sender: TObject);
+var
+  vIA: TIA;
+begin
+  if Trim(memPergunta.Text) = '' then
+  begin
+    ShowMessage('Digite uma pergunta.');
+    Exit;
+  end;
+
+  vIA := TIA.Create('COLOQUE_SUA_API_KEY_AQUI');
+
+  try
+    memResposta.Lines.Text := vIA.F_Perguntar(memPergunta.Text);
+  finally
+    vIA.Free;
+  end;
+end;
+
+procedure TfrmIA.btnSairClick(Sender: TObject);
+begin
+  Close;
+end;
+
+end.

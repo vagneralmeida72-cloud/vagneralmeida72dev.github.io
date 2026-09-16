@@ -25,6 +25,11 @@ type
     edtEmail: TDBEdit;
     edtCPF: TDBEdit;
     edtTelefone: TDBEdit;
+    cdsCadastroID: TIntegerField;
+    cdsCadastroNOME: TWideStringField;
+    cdsCadastroCPF: TWideStringField;
+    cdsCadastroEMAIL: TWideStringField;
+    cdsCadastroTELEFONE: TWideStringField;
     procedure btnNovoClick(Sender: TObject);
   private
     function F_ValidarCliente: Boolean;

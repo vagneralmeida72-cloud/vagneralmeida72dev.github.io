@@ -147,6 +147,11 @@
         <DCCReference Include="Repository\uCadastroRepository.pas"/>
         <DCCReference Include="Service\uCadastroService.pas"/>
         <DCCReference Include="Padrao\Lib\LibFuncoes.pas"/>
+        <DCCReference Include="Padrao\Forms\uFrmIA.pas">
+            <Form>frmIA</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Service\uIA.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

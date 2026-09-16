@@ -98,6 +98,37 @@
       end
     end
   end
+  inherited cdsCadastro: TClientDataSet
+    object cdsCadastroID: TIntegerField
+      DisplayLabel = 'C'#243'digo'
+      FieldName = 'ID'
+      ProviderFlags = []
+    end
+    object cdsCadastroNOME: TWideStringField
+      DisplayLabel = 'Nome'
+      DisplayWidth = 50
+      FieldName = 'NOME'
+      ProviderFlags = []
+      Size = 100
+    end
+    object cdsCadastroCPF: TWideStringField
+      DisplayWidth = 15
+      FieldName = 'CPF'
+      ProviderFlags = []
+    end
+    object cdsCadastroEMAIL: TWideStringField
+      DisplayLabel = 'E-mail'
+      DisplayWidth = 50
+      FieldName = 'EMAIL'
+      ProviderFlags = []
+      Size = 150
+    end
+    object cdsCadastroTELEFONE: TWideStringField
+      DisplayLabel = 'Telefone'
+      FieldName = 'TELEFONE'
+      ProviderFlags = []
+    end
+  end
   inherited qryCadastro: TFDQuery
     SQL.Strings = (
       'SELECT'
