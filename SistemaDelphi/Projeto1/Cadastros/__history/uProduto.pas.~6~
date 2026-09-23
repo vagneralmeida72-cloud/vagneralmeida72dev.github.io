@@ -1,0 +1,65 @@
+unit uProduto;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uFrmCadastroBase, Data.DB,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, System.ImageList, Vcl.ImgList,
+  Datasnap.Provider, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  Datasnap.DBClient, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Buttons,
+  Vcl.ExtCtrls, uDM, uProdutoService, Vcl.StdCtrls, Vcl.Mask, Vcl.DBCtrls;
+
+type
+  TfrmProduto = class(TfrmCadastroBase)
+    Código: TLabel;
+    lblNome: TLabel;
+    edtCodigo: TDBEdit;
+    edtNome: TDBEdit;
+    cdsCadastroID: TIntegerField;
+    cdsCadastroNOME: TWideStringField;
+    procedure btnNovoClick(Sender: TObject);
+  private
+    function F_ValidarProduto: Boolean;
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmProduto: TfrmProduto;
+
+implementation
+
+{$R *.dfm}
+
+function TfrmProduto.F_ValidarProduto: Boolean;
+var
+  vID: Integer;
+begin
+  vID := 0;
+
+  if cdsCadastro.State = dsEdit then
+    vID := cdsCadastro.FieldByName('ID').AsInteger;
+
+//  Result := TProdutoService.F_Validar(edtNome.Text,
+//    '', vID, DM.FDConnection);
+end;
+
+procedure TfrmProduto.btnNovoClick(Sender: TObject);
+begin
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    //Validação visual dos campos obrigatórios
+    if not F_ValidarCamposObrigatorios then
+      Exit;
+
+    if not F_ValidarProduto then
+      Exit;
+  end;
+  inherited;
+end;
+
+end.

@@ -72,7 +72,7 @@ begin
 
   FDConnection.LoginPrompt := False;
 
-  // Cria o banco caso não exista
+  // Cria o banco caso não exista (começar um banco novo com Firebird versão 5)
   if not TFile.Exists(vArquivo) then
     FDConnection.Params.Add('OpenMode=Create');
 

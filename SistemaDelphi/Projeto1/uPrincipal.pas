@@ -27,6 +27,7 @@ type
     procedure miSairClick(Sender: TObject);
     procedure miClientesClick(Sender: TObject);
     procedure mnuAssistenteIAClick(Sender: TObject);
+    procedure Servios1Click(Sender: TObject);
   private
     procedure P_CriaForm(AFormClass: TFormClass);
     { Private declarations }
@@ -40,7 +41,7 @@ var
 implementation
 
 uses
-  uClientes, ufrmIA;
+  uClientes, ufrmIA, uProduto;
 
 {$R *.dfm}
 
@@ -95,6 +96,11 @@ begin
   finally
     vFrm.Free;
   end;
+end;
+
+procedure TfrmPrincipal.Servios1Click(Sender: TObject);
+begin
+  P_CriaForm(TfrmProduto);
 end;
 
 end.

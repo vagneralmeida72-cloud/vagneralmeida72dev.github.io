@@ -6,6 +6,7 @@
     StyleElements = [seFont, seClient, seBorder]
   end
   inherited pgcCadastro: TPageControl
+    ActivePage = tsCadastro
     inherited tsCadastro: TTabSheet
       inherited pnlCadastro: TPanel
         StyleElements = [seFont, seClient, seBorder]
@@ -40,7 +41,7 @@
         object Label1: TLabel
           Left = 31
           Top = 123
-          Width = 45
+          Width = 44
           Height = 15
           Caption = 'Telefone'
         end
@@ -63,7 +64,6 @@
           Height = 23
           DataField = 'NOME'
           DataSource = dsCadastro
-          MaxLength = 100
           TabOrder = 1
         end
         object edtEmail: TDBEdit

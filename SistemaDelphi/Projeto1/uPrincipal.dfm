@@ -59406,7 +59406,8 @@ object frmPrincipal: TfrmPrincipal
         OnClick = miClientesClick
       end
       object Servios1: TMenuItem
-        Caption = 'Servi'#231'os'
+        Caption = 'Produtos e Servi'#231'os'
+        OnClick = Servios1Click
       end
     end
     object miMovimentacoes: TMenuItem

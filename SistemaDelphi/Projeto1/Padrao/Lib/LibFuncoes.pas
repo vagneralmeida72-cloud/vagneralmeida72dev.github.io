@@ -3,7 +3,8 @@ unit LibFuncoes;
 interface
 
 uses
-  System.SysUtils, System.UITypes, Vcl.Dialogs, Vcl.Forms, Winapi.Windows;
+  System.SysUtils, System.UITypes, Vcl.Dialogs, Vcl.Forms, Winapi.Windows,
+  Vcl.StdCtrls, Vcl.DBCtrls;
 
 type
   TTipoMensagem = (tmInformacao, tmAviso, tmErro, tmConfirmacao);
@@ -11,6 +12,7 @@ type
   function F_Mensagem(pMensagem: string;
     pTipo: TTipoMensagem = tmInformacao): Integer;
   function F_Confirmar(pMensagem: string): Boolean;
+  procedure P_ContadorCaracteres(pMemo: TDBMemo; pLabel: TLabel; pLimite: Integer);
 
 implementation
 
@@ -55,6 +57,18 @@ function F_Confirmar(pMensagem: string): Boolean;
 begin
   Result := MessageBox(0, PChar(pMensagem), PChar('Confirmação'),
     MB_YESNO or MB_ICONQUESTION) = IDYES;
+end;
+
+procedure P_ContadorCaracteres(pMemo: TDBMemo; pLabel: TLabel; pLimite: Integer);
+var
+  Restante: Integer;
+begin
+  Restante := pLimite - Length(pMemo.Text);
+
+  if Restante < 0 then
+    Restante := 0;
+
+  pLabel.Caption := IntToStr(Restante) + ' caracteres restantes...';
 end;
 
 end.

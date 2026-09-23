@@ -1,0 +1,159 @@
+﻿inherited frmProduto: TfrmProduto
+  Caption = 'Cadastro de Produtos e Servi'#231'os'
+  StyleElements = [seFont, seClient, seBorder]
+  TextHeight = 15
+  inherited pnlBotoes: TPanel
+    StyleElements = [seFont, seClient, seBorder]
+  end
+  inherited pgcCadastro: TPageControl
+    ActivePage = tsCadastro
+    inherited tsCadastro: TTabSheet
+      inherited pnlCadastro: TPanel
+        StyleElements = [seFont, seClient, seBorder]
+        object Código: TLabel
+          Left = 37
+          Top = 27
+          Width = 39
+          Height = 15
+          Caption = 'C'#243'digo'
+        end
+        object lblNome: TLabel
+          Left = 43
+          Top = 51
+          Width = 33
+          Height = 15
+          Caption = 'Nome'
+        end
+        object lblTipo: TLabel
+          Left = 53
+          Top = 75
+          Width = 23
+          Height = 15
+          Caption = 'Tipo'
+        end
+        object lblPreco: TLabel
+          Left = 46
+          Top = 99
+          Width = 30
+          Height = 15
+          Caption = 'Pre'#231'o'
+        end
+        object lblAtivo: TLabel
+          Left = 48
+          Top = 123
+          Width = 28
+          Height = 15
+          Caption = 'Ativo'
+        end
+        object lblDescricao: TLabel
+          Left = 25
+          Top = 147
+          Width = 51
+          Height = 15
+          Caption = 'Descri'#231#227'o'
+        end
+        object edtCodigo: TDBEdit
+          Left = 82
+          Top = 24
+          Width = 50
+          Height = 23
+          Color = clSilver
+          DataField = 'ID'
+          DataSource = dsCadastro
+          ReadOnly = True
+          TabOrder = 0
+        end
+        object edtNome: TDBEdit
+          Tag = 1
+          Left = 82
+          Top = 48
+          Width = 300
+          Height = 23
+          DataField = 'NOME'
+          DataSource = dsCadastro
+          TabOrder = 1
+        end
+        object cbTipo: TComboBox
+          Left = 82
+          Top = 72
+          Width = 121
+          Height = 23
+          ItemIndex = 0
+          TabOrder = 2
+          Text = 'Produto'
+          Items.Strings = (
+            'Produto'
+            'Servi'#231'o')
+        end
+        object cbAtivo: TComboBox
+          Left = 82
+          Top = 120
+          Width = 123
+          Height = 23
+          ItemIndex = 0
+          TabOrder = 3
+          Text = 'Sim'
+          Items.Strings = (
+            'Sim'
+            'N'#227'o')
+        end
+        object dmDescricao: TDBMemo
+          Left = 82
+          Top = 144
+          Width = 300
+          Height = 89
+          DataField = 'DESCRICAO'
+          DataSource = dsCadastro
+          ScrollBars = ssVertical
+          TabOrder = 4
+        end
+        object edtPreco: TDBEdit
+          Tag = 1
+          Left = 82
+          Top = 96
+          Width = 121
+          Height = 23
+          DataField = 'PRECO'
+          DataSource = dsCadastro
+          TabOrder = 5
+        end
+      end
+    end
+  end
+  inherited cdsCadastro: TClientDataSet
+    OnNewRecord = cdsCadastroNewRecord
+    object cdsCadastroID: TIntegerField
+      DisplayLabel = 'C'#243'digo'
+      FieldName = 'ID'
+    end
+    object cdsCadastroNOME: TWideStringField
+      DisplayLabel = 'Nome'
+      DisplayWidth = 50
+      FieldName = 'NOME'
+      Size = 100
+    end
+    object cdsCadastroPRECO: TFMTBCDField
+      DisplayLabel = 'Pre'#231'o'
+      FieldName = 'PRECO'
+      Size = 15
+    end
+    object cdsCadastroDESCRICAO: TWideStringField
+      DisplayLabel = 'Descri'#231#227'o'
+      DisplayWidth = 100
+      FieldName = 'DESCRICAO'
+      Size = 1000
+    end
+  end
+  inherited qryCadastro: TFDQuery
+    SQL.Strings = (
+      'SELECT'
+      '    ID,'
+      '    NOME,'
+      '    TIPO,'
+      '    PRECO,'
+      '    ATIVO,'
+      '    DESCRICAO'
+      ' FROM CLIENTE '
+      ' ORDER BY ID')
+  end
+end
