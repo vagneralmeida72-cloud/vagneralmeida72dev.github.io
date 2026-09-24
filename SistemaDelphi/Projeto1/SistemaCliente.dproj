@@ -152,9 +152,12 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="Service\uIA.pas"/>
-        <DCCReference Include="Service\uProdutoService.pas"/>
         <DCCReference Include="Cadastros\uProduto.pas">
             <Form>frmProduto</Form>
+        </DCCReference>
+        <DCCReference Include="Service\uProdutoService.pas"/>
+        <DCCReference Include="Cadastros\uClienteAPI.pas">
+            <Form>frmApiCliente</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <BuildConfiguration Include="Base">

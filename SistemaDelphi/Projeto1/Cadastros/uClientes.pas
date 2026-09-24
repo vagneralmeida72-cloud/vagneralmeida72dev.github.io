@@ -30,7 +30,9 @@ type
     cdsCadastroCPF: TWideStringField;
     cdsCadastroEMAIL: TWideStringField;
     cdsCadastroTELEFONE: TWideStringField;
+    btnImportar: TSpeedButton;
     procedure btnNovoClick(Sender: TObject);
+    procedure btnImportarClick(Sender: TObject);
   private
     function F_ValidarCliente: Boolean;
     //
@@ -44,6 +46,21 @@ var
 implementation
 
 {$R *.dfm}
+
+uses
+  uClienteAPI;
+
+procedure TfrmCliente.btnImportarClick(Sender: TObject);
+var
+  frmApiCliente: TfrmApiCliente;
+begin
+  frmApiCliente := TfrmApiCliente.Create(Self);
+  try
+    frmApiCliente.ShowModal;
+  finally
+    frmApiCliente.Free;
+  end;
+end;
 
 procedure TfrmCliente.btnNovoClick(Sender: TObject);
 begin

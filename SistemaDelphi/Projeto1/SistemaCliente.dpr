@@ -14,8 +14,9 @@ uses
   LibFuncoes in 'Padrao\Lib\LibFuncoes.pas',
   uFrmIA in 'Padrao\Forms\uFrmIA.pas' {frmIA},
   uIA in 'Service\uIA.pas',
+  uProduto in 'Cadastros\uProduto.pas' {frmProduto},
   uProdutoService in 'Service\uProdutoService.pas',
-  uProduto in 'Cadastros\uProduto.pas' {frmProduto};
+  uClienteAPI in 'Cadastros\uClienteAPI.pas' {frmApiCliente};
 
 {$R *.res}
 
@@ -30,5 +31,6 @@ begin
   Application.CreateForm(TfrmCliente, frmCliente);
   Application.CreateForm(TfrmIA, frmIA);
   Application.CreateForm(TfrmProduto, frmProduto);
+  Application.CreateForm(TfrmApiCliente, frmApiCliente);
   Application.Run;
 end.

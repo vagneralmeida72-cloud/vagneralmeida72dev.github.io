@@ -12,7 +12,11 @@ uses
   uCadastroRepository in 'Repository\uCadastroRepository.pas',
   uCadastroService in 'Service\uCadastroService.pas',
   LibFuncoes in 'Padrao\Lib\LibFuncoes.pas',
-  uFrmIA in 'Padrao\Forms\uFrmIA.pas' {Form1};
+  uFrmIA in 'Padrao\Forms\uFrmIA.pas' {frmIA},
+  uIA in 'Service\uIA.pas',
+  uProdutoService in 'Service\uProdutoService.pas',
+  uProduto in 'Cadastros\uProduto.pas' {frmProduto},
+  uClienteAPI in 'Cadastros\uClienteAPI.pas' {frmApiCliente};
 
 {$R *.res}
 
@@ -20,10 +24,13 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TDM, DM);
-  Application.CreateForm(TForm1, Form1);
   DM.P_Conectar;
+  //crie os forms
   Application.CreateForm(TfrmPrincipal, frmPrincipal);
   Application.CreateForm(TfrmCadastroBase, frmCadastroBase);
   Application.CreateForm(TfrmCliente, frmCliente);
+  Application.CreateForm(TfrmIA, frmIA);
+  Application.CreateForm(TfrmProduto, frmProduto);
+  Application.CreateForm(TfrmApiCliente, frmApiCliente);
   Application.Run;
 end.

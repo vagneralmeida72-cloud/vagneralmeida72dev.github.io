@@ -21,7 +21,7 @@ type
     RelVendas: TMenuItem;
     imgPrincipal: TImage;
     mnuAssistenteIA: TMenuItem;
-    ConsultaAPI1: TMenuItem;
+    Dashboard1: TMenuItem;
     Servios1: TMenuItem;
     ApiHorse1: TMenuItem;
     procedure miSairClick(Sender: TObject);

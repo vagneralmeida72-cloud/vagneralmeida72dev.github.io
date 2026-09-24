@@ -4,6 +4,19 @@
   TextHeight = 15
   inherited pnlBotoes: TPanel
     StyleElements = [seFont, seClient, seBorder]
+    object btnImportar: TSpeedButton
+      Left = 238
+      Top = 2
+      Width = 59
+      Height = 61
+      Align = alLeft
+      Caption = 'Importar'
+      Images = imgIcon
+      Layout = blGlyphTop
+      OnClick = btnImportarClick
+      ExplicitLeft = 291
+      ExplicitTop = 4
+    end
   end
   inherited pgcCadastro: TPageControl
     ActivePage = tsCadastro
@@ -41,7 +54,7 @@
         object Label1: TLabel
           Left = 31
           Top = 123
-          Width = 45
+          Width = 44
           Height = 15
           Caption = 'Telefone'
         end
@@ -64,7 +77,6 @@
           Height = 23
           DataField = 'NOME'
           DataSource = dsCadastro
-          MaxLength = 100
           TabOrder = 1
         end
         object edtEmail: TDBEdit
@@ -78,6 +90,7 @@
           TabOrder = 2
         end
         object edtCPF: TDBEdit
+          Tag = 1
           Left = 82
           Top = 96
           Width = 121
@@ -96,6 +109,37 @@
           TabOrder = 4
         end
       end
+    end
+  end
+  inherited cdsCadastro: TClientDataSet
+    object cdsCadastroID: TIntegerField
+      DisplayLabel = 'C'#243'digo'
+      FieldName = 'ID'
+      ProviderFlags = []
+    end
+    object cdsCadastroNOME: TWideStringField
+      DisplayLabel = 'Nome'
+      DisplayWidth = 50
+      FieldName = 'NOME'
+      ProviderFlags = []
+      Size = 100
+    end
+    object cdsCadastroCPF: TWideStringField
+      DisplayWidth = 15
+      FieldName = 'CPF'
+      ProviderFlags = []
+    end
+    object cdsCadastroEMAIL: TWideStringField
+      DisplayLabel = 'E-mail'
+      DisplayWidth = 50
+      FieldName = 'EMAIL'
+      ProviderFlags = []
+      Size = 150
+    end
+    object cdsCadastroTELEFONE: TWideStringField
+      DisplayLabel = 'Telefone'
+      FieldName = 'TELEFONE'
+      ProviderFlags = []
     end
   end
   inherited qryCadastro: TFDQuery

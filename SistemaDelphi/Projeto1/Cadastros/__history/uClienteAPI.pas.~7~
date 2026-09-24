@@ -1,0 +1,301 @@
+unit uClienteAPI;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.DBCtrls, Vcl.ExtCtrls,
+  REST.Types, REST.Client, Data.Bind.Components, Data.Bind.ObjectScope, System.JSON,
+  FireDAC.Comp.Client, FireDAC.Stan.Param;
+
+
+type
+  TfrmApiCliente = class(TForm)
+    Panel1: TPanel;
+    dbmResult: TDBMemo;
+    Panel2: TPanel;
+    btnFechar: TButton;
+    btnImportar: TButton;
+    RESTClient1: TRESTClient;
+    RESTRequest1: TRESTRequest;
+    RESTResponse1: TRESTResponse;
+    procedure btnFecharClick(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure btnImportarClick(Sender: TObject);
+  private
+    procedure P_LimparLog;
+    procedure P_AdicionarLog(pMensagem: string);
+    function F_ConsultarAPI(pDocumento, pResultado: string): Boolean;
+    function F_ProcessarResultado(pResultado: string): Boolean;
+    function F_GravarCliente(pID: Integer; pNome, pEmail,
+      pTelefone: string): Boolean;
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmApiCliente: TfrmApiCliente;
+
+implementation
+
+{$R *.dfm}
+
+uses uDM;
+
+procedure TfrmApiCliente.btnFecharClick(Sender: TObject);
+begin
+  close;
+end;
+
+procedure TfrmApiCliente.P_LimparLog;
+begin
+  dbmResult.Lines.Clear;
+end;
+
+procedure TfrmApiCliente.btnImportarClick(Sender: TObject);
+var
+  vDocumento, vResultado: string;
+begin
+  P_LimparLog;
+  P_AdicionarLog('========================================');
+  P_AdicionarLog('INICIANDO IMPORTAÇÃO');
+  P_AdicionarLog('========================================');
+
+  try
+    vDocumento := '12345678000199';
+    P_AdicionarLog('Documento informado: ' + vDocumento);
+
+    P_AdicionarLog('Preparando consulta REST...');
+
+    if not F_ConsultarAPI(vDocumento, vResultado) then
+    begin
+      P_AdicionarLog('ERRO: A consulta à API falhou.');
+      Exit;
+    end;
+
+    P_AdicionarLog('Consulta realizada com sucesso.');
+    P_AdicionarLog('Processando resposta da API...');
+
+    if F_ProcessarResultado(vResultado) then
+    begin
+      P_AdicionarLog('----------------------------------------');
+      P_AdicionarLog('IMPORTAÇÃO CONCLUÍDA COM SUCESSO.');
+    end
+    else
+    begin
+      P_AdicionarLog('IMPORTAÇÃO NÃO CONCLUÍDA.');
+    end;
+  except
+    on E: Exception do
+    begin
+      P_AdicionarLog('ERRO GERAL: ' + E.Message);
+    end;
+  end;
+
+  P_AdicionarLog('========================================');
+  P_AdicionarLog('FIM DA IMPORTAÇÃO');
+  P_AdicionarLog('========================================');
+end;
+
+procedure TfrmApiCliente.FormCreate(Sender: TObject);
+begin
+  P_LimparLog;
+  P_AdicionarLog('========================================');
+  P_AdicionarLog('      INTEGRAÇÃO API - CLIENTE');
+  P_AdicionarLog('========================================');
+  P_AdicionarLog('Sistema iniciado.');
+  P_AdicionarLog('Aguardando importação...');
+end;
+
+procedure TfrmApiCliente.P_AdicionarLog(pMensagem: string);
+begin
+  dbmResult.Lines.Add(FormatDateTime('[dd/mm/yyyy hh:nn:ss]', Now) + pMensagem);
+end;
+
+function TfrmApiCliente.F_ConsultarAPI(pDocumento, pResultado: string): Boolean;
+begin
+  Result := False;
+  pResultado := '';
+
+  try
+    RESTClient1.BaseURL := 'http://localhost:8080';
+    RESTRequest1.Resource := '/cliente';
+    RESTRequest1.Method := rmGET;
+    RESTRequest1.Response := RESTResponse1;
+
+
+    P_AdicionarLog('URL: ' + RESTClient1.BaseURL + RESTRequest1.Resource);
+    P_AdicionarLog('Método: GET');
+    P_AdicionarLog('Executando requisição...');
+
+    RESTRequest1.Execute;
+
+    //Verifica código HTTP
+    P_AdicionarLog('HTTP Status: ' + IntToStr(RESTResponse1.StatusCode));
+
+    if RESTResponse1.StatusCode <> 200 then
+    begin
+      P_AdicionarLog('ERRO HTTP: ' + RESTResponse1.StatusText);
+      Exit;
+    end;
+
+    //Obtém JSON retornado
+    pResultado := RESTResponse1.Content;
+
+    if Trim(pResultado) = '' then
+    begin
+      P_AdicionarLog('ERRO: A API retornou resposta vazia.');
+      Exit;
+    end;
+    P_AdicionarLog('Resposta recebida.');
+    Result := True;
+  except
+    on E: Exception do
+    begin
+      P_AdicionarLog('ERRO REST: ' + E.Message);
+      Result := False;
+    end;
+  end;
+end;
+
+function TfrmApiCliente.F_ProcessarResultado(pResultado: string): Boolean;
+var
+  JSONValue: TJSONValue;
+  JSONObject: TJSONObject;
+  vID: Integer;
+  vNome, vEmail, vTelefone: string;
+begin
+  Result := False;
+  JSONValue := nil;
+  try
+    P_AdicionarLog('Validando JSON...');
+    JSONValue := TJSONObject.ParseJSONValue(pResultado);
+    if not Assigned(JSONValue) then
+    begin
+      P_AdicionarLog('ERRO: JSON inválido.');
+      Exit;
+    end;
+
+    if not (JSONValue is TJSONObject) then
+    begin
+      P_AdicionarLog('ERRO: Retorno não é um objeto JSON.');
+      Exit;
+    end;
+
+    JSONObject := JSONValue as TJSONObject;
+
+    vID       := JSONObject.GetValue<Integer>('id');
+    vNome     := JSONObject.GetValue<string>('name');
+    vEmail    := JSONObject.GetValue<string>('email');
+    vTelefone := JSONObject.GetValue<string>('phone');
+
+    P_AdicionarLog('----------------------------------------');
+    P_AdicionarLog('CLIENTE RECEBIDO DA API');
+    P_AdicionarLog('ID: ' + IntToStr(vID));
+    P_AdicionarLog('Nome: ' + vNome);
+    P_AdicionarLog('E-mail: ' + vEmail);
+    P_AdicionarLog('Telefone: ' + vTelefone);
+    P_AdicionarLog('----------------------------------------');
+
+    if not F_GravarCliente(vID, vNome, vEmail, vTelefone) then
+    begin
+      P_AdicionarLog( 'ERRO: Cliente não foi gravado.' );
+      Exit;
+    end;
+
+    P_AdicionarLog('Cliente gravado com sucesso.');
+    Result := True;
+  except
+    on E: Exception do
+    begin
+      P_AdicionarLog('ERRO AO PROCESSAR JSON: ' + E.Message);
+      Result := False;
+    end;
+  end;
+  JSONValue.Free;
+end;
+
+function TfrmApiCliente.F_GravarCliente(pID: Integer; pNome, pEmail,
+  pTelefone: string): Boolean;
+var
+  vQuery: TFDQuery;
+  vExiste: Boolean;
+begin
+  vQuery := TFDQuery.Create(nil);
+
+  try
+    vQuery.Connection := DM.FDConnection;
+
+    P_AdicionarLog('Verificando se cliente já existe...');
+    vQuery.Close;
+    vQuery.SQL.Clear;
+    vQuery.SQL.Add('SELECT COUNT(*) AS QTDE FROM CLIENTE WHERE ID_API = :ID_API');
+    vQuery.ParamByName('ID_API').AsInteger := pID;
+    vQuery.Open;
+    vExiste := vQuery.FieldByName('QTDE').AsInteger > 0;
+    vQuery.Close;
+
+    DM.FDConnection.StartTransaction;
+    try
+      //SE EXISTIR, ATUALIZA
+      if vExiste then
+      begin
+        P_AdicionarLog('Cliente já existe.');
+        P_AdicionarLog('Atualizando cadastro...');
+        vQuery.SQL.Clear;
+        vQuery.SQL.Add('UPDATE CLIENTE SET ');
+        vQuery.SQL.Add('NOME = :NOME, ');
+        vQuery.SQL.Add('EMAIL = :EMAIL, ');
+        vQuery.SQL.Add('TELEFONE = :TELEFONE ');
+        vQuery.SQL.Add('WHERE ID_API = :ID_API');
+
+        vQuery.ParamByName('ID_API').AsInteger  := pID;
+        vQuery.ParamByName('NOME').AsString     := pNome;
+        vQuery.ParamByName('EMAIL').AsString    := pEmail;
+        vQuery.ParamByName('TELEFONE').AsString := pTelefone;
+        vQuery.ExecSQL;
+
+        P_AdicionarLog('Cliente atualizado.');
+      end
+      else
+      begin
+        //SE NÃO EXISTIR, INSERE
+        P_AdicionarLog('Cliente não encontrado.');
+        P_AdicionarLog('Inserindo novo cliente...');
+
+        vQuery.SQL.Clear;
+        vQuery.SQL.Add('INSERT INTO CLIENTE (ID_API, NOME, EMAIL, TELEFONE)');
+        vQuery.SQL.Add(' VALUES (:ID_API, :NOME, :EMAIL, :TELEFONE);');
+
+        vQuery.ParamByName('ID_API').AsInteger  := pID;
+        vQuery.ParamByName('NOME').AsString     := pNome;
+        vQuery.ParamByName('EMAIL').AsString    := pEmail;
+        vQuery.ParamByName('TELEFONE').AsString := pTelefone;
+        vQuery.ExecSQL;
+
+        P_AdicionarLog('Novo cliente inserido.');
+      end;
+      DM.FDConnection.Commit;
+      Result := True;
+    except
+      on E: Exception do
+      begin
+        if DM.FDConnection.InTransaction then
+          DM.FDConnection.Rollback;
+
+        P_AdicionarLog('ERRO AO GRAVAR CLIENTE: ' + E.Message);
+        Result := False;
+      end;
+    end;
+  except
+    on E: Exception do
+    begin
+      P_AdicionarLog('ERRO DE BANCO: ' + E.Message );
+      Result := False;
+    end;
+  end;
+  vQuery.Free;
+end;
+
+end.

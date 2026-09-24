@@ -59388,8 +59388,8 @@ object frmPrincipal: TfrmPrincipal
         Caption = 'Assistente IA'
         OnClick = mnuAssistenteIAClick
       end
-      object ConsultaAPI1: TMenuItem
-        Caption = 'Consulta API'
+      object Dashboard1: TMenuItem
+        Caption = 'Dashboard'
       end
       object ApiHorse1: TMenuItem
         Caption = 'Consulta Horse'

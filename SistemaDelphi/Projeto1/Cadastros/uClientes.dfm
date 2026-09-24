@@ -4,9 +4,21 @@
   TextHeight = 15
   inherited pnlBotoes: TPanel
     StyleElements = [seFont, seClient, seBorder]
+    object btnImportar: TSpeedButton
+      Left = 238
+      Top = 2
+      Width = 59
+      Height = 61
+      Align = alLeft
+      Caption = 'Importar'
+      Images = imgIcon
+      Layout = blGlyphTop
+      OnClick = btnImportarClick
+      ExplicitLeft = 291
+      ExplicitTop = 4
+    end
   end
   inherited pgcCadastro: TPageControl
-    ActivePage = tsCadastro
     inherited tsCadastro: TTabSheet
       inherited pnlCadastro: TPanel
         StyleElements = [seFont, seClient, seBorder]

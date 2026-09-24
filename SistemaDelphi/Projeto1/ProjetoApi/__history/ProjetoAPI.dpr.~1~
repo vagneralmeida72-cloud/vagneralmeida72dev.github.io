@@ -1,0 +1,20 @@
+program ProjetoAPI;
+{$APPTYPE GUI}
+
+uses
+  Vcl.Forms,
+  Web.WebReq,
+  IdHTTPWebBrokerBridge,
+  uServidorAPI in 'ProjetoApi\Forms\uServidorAPI.pas' {frmServidorAPI},
+  uWebModuleAPI in 'ProjetoApi\Forms\uWebModuleAPI.pas' {WebModuleAPI: TWebModuleAPI};
+
+{$R *.res}
+
+begin
+  if WebRequestHandler <> nil then
+    WebRequestHandler.WebModuleClass := WebModuleClass;
+  Application.Initialize;
+  Application.CreateForm(TfrmServidorAPI, frmServidorAPI);
+  Application.CreateForm(TfrmServidorAPI, frmServidorAPI);
+  Application.Run;
+end.

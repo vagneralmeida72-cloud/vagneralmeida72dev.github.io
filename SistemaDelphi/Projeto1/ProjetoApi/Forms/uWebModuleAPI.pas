@@ -1,0 +1,204 @@
+unit uWebModuleAPI;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Classes,
+  System.JSON,
+  Web.HTTPApp;
+
+type
+  TWebModule1 = class(TWebModule)
+    WebActionItem1: TWebActionItem;
+
+    procedure WebActionItem1Action(
+      Sender: TObject;
+      Request: TWebRequest;
+      Response: TWebResponse;
+      var Handled: Boolean
+    );
+
+  private
+    procedure ResponderJSON(
+      Response: TWebResponse;
+      pJSON: string;
+      pStatusCode: Integer
+    );
+
+  public
+  end;
+
+var
+  WebModule1: TWebModule1;
+  WebModuleClass: TComponentClass = TWebModule1;
+
+implementation
+
+{%CLASSGROUP 'Vcl.Controls.TControl'}
+
+{$R *.dfm}
+
+procedure TWebModule1.WebActionItem1Action(
+  Sender: TObject;
+  Request: TWebRequest;
+  Response: TWebResponse;
+  var Handled: Boolean
+);
+var
+  JSON: TJSONObject;
+  Cliente: TJSONObject;
+  Documento: string;
+begin
+  Handled := True;
+
+  try
+    Documento := Request.QueryFields.Values['documento'];
+
+    // Documento não informado
+    if Trim(Documento) = '' then
+    begin
+      JSON := TJSONObject.Create;
+      try
+        JSON.AddPair(
+          'sucesso',
+          TJSONFalse.Create
+        );
+
+        JSON.AddPair(
+          'mensagem',
+          'Documento não informado.'
+        );
+
+        ResponderJSON(
+          Response,
+          JSON.ToJSON,
+          400
+        );
+      finally
+        JSON.Free;
+      end;
+
+      Exit;
+    end;
+
+    // JSON principal
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair(
+        'sucesso',
+        TJSONTrue.Create
+      );
+
+      JSON.AddPair(
+        'mensagem',
+        'Cliente encontrado.'
+      );
+
+      // Dados do cliente
+      Cliente := TJSONObject.Create;
+
+      Cliente.AddPair(
+        'documento',
+        Documento
+      );
+
+      Cliente.AddPair(
+        'nome',
+        'EMPRESA TESTE LTDA'
+      );
+
+      Cliente.AddPair(
+        'email',
+        'teste@empresa.com'
+      );
+
+      Cliente.AddPair(
+        'telefone',
+        '65999999999'
+      );
+
+      Cliente.AddPair(
+        'endereco',
+        'Rua Principal'
+      );
+
+      Cliente.AddPair(
+        'numero',
+        '100'
+      );
+
+      Cliente.AddPair(
+        'bairro',
+        'Centro'
+      );
+
+      Cliente.AddPair(
+        'cidade',
+        'Barra do Bugres'
+      );
+
+      Cliente.AddPair(
+        'uf',
+        'MT'
+      );
+
+      JSON.AddPair(
+        'cliente',
+        Cliente
+      );
+
+      // Resposta
+      ResponderJSON(
+        Response,
+        JSON.ToJSON,
+        200
+      );
+
+    finally
+      JSON.Free;
+    end;
+
+  except
+    on E: Exception do
+    begin
+      JSON := TJSONObject.Create;
+
+      try
+        JSON.AddPair(
+          'sucesso',
+          TJSONFalse.Create
+        );
+
+        JSON.AddPair(
+          'mensagem',
+          E.Message
+        );
+
+        ResponderJSON(
+          Response,
+          JSON.ToJSON,
+          500
+        );
+
+      finally
+        JSON.Free;
+      end;
+    end;
+  end;
+end;
+
+procedure TWebModule1.ResponderJSON(
+  Response: TWebResponse;
+  pJSON: string;
+  pStatusCode: Integer
+);
+begin
+  Response.StatusCode := pStatusCode;
+  Response.ContentType := 'application/json';
+  Response.Content := pJSON;
+  Response.ContentLength := Length(Response.Content);
+end;
+
+end.
+

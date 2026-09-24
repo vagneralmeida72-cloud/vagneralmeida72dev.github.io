@@ -25,9 +25,18 @@ type
     edtEmail: TDBEdit;
     edtCPF: TDBEdit;
     edtTelefone: TDBEdit;
-    procedure cdsCadastroBeforePost(DataSet: TDataSet);
+    cdsCadastroID: TIntegerField;
+    cdsCadastroNOME: TWideStringField;
+    cdsCadastroCPF: TWideStringField;
+    cdsCadastroEMAIL: TWideStringField;
+    cdsCadastroTELEFONE: TWideStringField;
+    btnImportar: TSpeedButton;
+    procedure btnNovoClick(Sender: TObject);
   private
+    function F_ValidarCliente: Boolean;
+    //
   public
+    //
   end;
 
 var
@@ -37,27 +46,32 @@ implementation
 
 {$R *.dfm}
 
+procedure TfrmCliente.btnNovoClick(Sender: TObject);
+begin
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    //Validação visual dos campos obrigatórios
+    if not F_ValidarCamposObrigatorios then
+      Exit;
 
-procedure TfrmCliente.cdsCadastroBeforePost(DataSet: TDataSet);
+    if not F_ValidarCliente then
+      Exit;
+  end;
+  inherited;
+
+end;
+
+function TfrmCliente.F_ValidarCliente: Boolean;
 var
   vID: Integer;
 begin
   vID := 0;
 
-  if DataSet.State = dsEdit then
-    vID := DataSet.FieldByName('ID').AsInteger;
+  if cdsCadastro.State = dsEdit then
+    vID := cdsCadastro.FieldByName('ID').AsInteger;
 
-  if not TClienteService.P_Validar(
-    DataSet.FieldByName('NOME').AsString,
-    DataSet.FieldByName('CPF').AsString,
-    DataSet.FieldByName('EMAIL').AsString,
-    vID,
-    DM.FDConnection) then
-    Abort;
-
-  inherited;
+  Result := TClienteService.F_Validar(edtNome.Text, edtCPF.Text,
+    edtEmail.Text, vID, DM.FDConnection);
 end;
-
-
 
 end.

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2026/09/24 14:12:40.000.007,=C:\Users\User\Documents\Embarcadero\Studio\Projects\FormUnit1.pas</Transaction>
+    <Transaction>2026/09/24 14:12:40.000.750,=C:\Users\User\Documents\Embarcadero\Studio\Projects\WebModuleUnit1.pas</Transaction>
+    <Transaction>2026/09/24 14:18:15.000.440,C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\Forms\uServidorAPI.pas=C:\Users\User\Documents\Embarcadero\Studio\Projects\FormUnit1.pas</Transaction>
+    <Transaction>2026/09/24 14:18:15.000.440,C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\Forms\uServidorAPI.dfm=C:\Users\User\Documents\Embarcadero\Studio\Projects\FormUnit1.dfm</Transaction>
+    <Transaction>2026/09/24 14:18:51.000.041,C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\Forms\uWebModuleAPI.dfm=C:\Users\User\Documents\Embarcadero\Studio\Projects\WebModuleUnit1.dfm</Transaction>
+    <Transaction>2026/09/24 14:18:51.000.041,C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\Padrao\Forms\uWebModuleAPI.pas=C:\Users\User\Documents\Embarcadero\Studio\Projects\WebModuleUnit1.pas</Transaction>
+    <Transaction>2026/09/24 14:21:05.000.268,C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\ProjetoAPI.dproj=C:\Users\User\Documents\Embarcadero\Studio\Projects\Project1.dproj</Transaction>
+    <Transaction>2026/09/24 14:43:12.000.975,=C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\ProjetoApi\Forms\uServidorAPI.pas</Transaction>
+    <Transaction>2026/09/24 14:54:27.000.998,=C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\ProjetoApi\Forms\uServidorAPI.pas</Transaction>
+    <Transaction>2026/09/24 14:57:56.000.286,=C:\Projetos\vagneralmeida72dev.github.io\SistemaDelphi\Projeto1\ProjetoApi\Forms\uWebModuleAPI.pas</Transaction>
+  </Transactions>
+</BorlandProject>
