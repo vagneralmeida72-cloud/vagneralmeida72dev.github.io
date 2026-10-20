@@ -88,6 +88,11 @@ begin
       ');'
     );
   end;
+  if pUpdate.F_TabelaExiste('VENDA_ITEM') then
+  begin
+    if not pUpdate.F_CampoExiste('VENDA_ITEM','TIPO') then
+      pUpdate.Connection.ExecSQL('ALTER TABLE VENDA_ITEM ADD TIPO CHAR(1) NOT NULL;');
+  end;
 end;
 
 class procedure TUpdate.Executar(pConnection: TFDConnection);

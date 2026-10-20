@@ -1,0 +1,91 @@
+unit uDMSearch;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Classes,
+  Data.DB,
+  FireDAC.Comp.Client, FireDAC.Stan.Intf, FireDAC.Stan.Option,
+  FireDAC.Stan.Param, FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf,
+  FireDAC.DApt.Intf, FireDAC.Stan.Async, FireDAC.DApt, FireDAC.Comp.DataSet;
+
+type
+  TDM6 = class(TDataModule)
+    qryBuscaCliente: TFDQuery;
+    qryBuscaProduto: TFDQuery;
+    qryBuscaGenerica: TFDQuery;
+    dsBuscaCliente: TDataSource;
+    dsBuscaProduto: TDataSource;
+    dsBuscaGenerica: TDataSource;
+  public
+    procedure PesquisarCliente(const pTexto: string);
+    procedure PesquisarProduto(const pTexto: string);
+
+    procedure PesquisarGenerico(
+      const pSQL, pTexto: string);
+  end;
+
+var
+  DM6: TDM6;
+
+implementation
+
+{$R *.dfm}
+
+procedure TDM6.PesquisarCliente(const pTexto: string);
+begin
+  qryBuscaCliente.Close;
+
+  qryBuscaCliente.SQL.Text :=
+    'SELECT ID, NOME, CPF ' +
+    'FROM CLIENTE ' +
+    'WHERE UPPER(NOME) LIKE UPPER(:PESQUISA) ' +
+    '   OR CPF LIKE :PESQUISA ' +
+    'ORDER BY NOME';
+
+  qryBuscaCliente.ParamByName('PESQUISA').AsString :=
+    '%' + Trim(pTexto) + '%';
+
+  qryBuscaCliente.Open;
+end;
+
+procedure TDM6.PesquisarProduto(const pTexto: string);
+begin
+  qryBuscaProduto.Close;
+
+  qryBuscaProduto.SQL.Text :=
+    'SELECT ID, NOME, TIPO, PRECO ' +
+    'FROM PRODUTO ' +
+    'WHERE UPPER(NOME) LIKE UPPER(:PESQUISA) ' +
+    '   OR CAST(ID AS VARCHAR(20)) LIKE :PESQUISA ' +
+    'ORDER BY NOME';
+
+  qryBuscaProduto.ParamByName('PESQUISA').AsString :=
+    '%' + Trim(pTexto) + '%';
+
+  qryBuscaProduto.Open;
+end;
+
+procedure TDM6.PesquisarGenerico(
+  const pSQL, pTexto: string);
+begin
+  if Trim(pSQL) = '' then
+    raise Exception.Create(
+      'SQL da pesquisa não informado.');
+
+  qryBuscaGenerica.Close;
+  qryBuscaGenerica.SQL.Text := pSQL;
+
+  if qryBuscaGenerica.Params.FindParam('PESQUISA') = nil then
+    raise Exception.Create(
+      'O SQL precisa conter o parâmetro :PESQUISA.');
+
+  qryBuscaGenerica.ParamByName('PESQUISA').AsString :=
+    '%' + Trim(pTexto) + '%';
+
+  qryBuscaGenerica.Open;
+end;
+
+end.
+

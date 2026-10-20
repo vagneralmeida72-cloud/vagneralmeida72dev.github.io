@@ -1,0 +1,60 @@
+unit uConsultaServiceD;
+
+interface
+
+uses
+  System.SysUtils, System.Classes,
+  FireDAC.Comp.Client, Vcl.Forms, System.UITypes;
+
+type
+  TConsultaServiceD = class
+  public
+    class function Selecionar(
+      AOwner: TComponent;
+      AConexao: TFDConnection;
+      const ATitulo, ASQL, ATextoInicial: string;
+      out AID: Integer;
+      out ANome, ATipo: string;
+      out APreco: Currency): Boolean;
+  end;
+
+implementation
+
+uses
+  uFrmConsultaBaseD;
+
+class function TConsultaServiceD.Selecionar(
+  AOwner: TComponent;
+  AConexao: TFDConnection;
+  const ATitulo, ASQL, ATextoInicial: string;
+  out AID: Integer;
+  out ANome, ATipo: string;
+  out APreco: Currency): Boolean;
+var
+  vConsulta: TfrmConsultaBaseD;
+begin
+  Result := False;
+  AID    := 0;
+  ANome  := '';
+  ATipo  := '';
+  APreco := 0;
+
+  vConsulta := TfrmConsultaBaseD.CreateConsulta(AOwner, AConexao, ATitulo,
+    ASQL, ATextoInicial);
+
+  try
+    if vConsulta.ShowModal = mrOk then
+    begin
+      AID    := vConsulta.IDSelecionado;
+      ANome  := vConsulta.NomeSelecionado;
+      ATipo  := vConsulta.TipoSelecionado;
+      APreco := vConsulta.PrecoSelecionado;
+      Result := True;
+    end;
+  finally
+    vConsulta.Free;
+  end;
+end;
+
+end.
+

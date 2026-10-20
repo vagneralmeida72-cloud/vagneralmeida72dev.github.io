@@ -1,0 +1,119 @@
+unit uProduto;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uFrmCadastroBase, Data.DB,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, System.ImageList, Vcl.ImgList,
+  Datasnap.Provider, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  Datasnap.DBClient, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Buttons,
+  Vcl.ExtCtrls, uDM, uProdutoService, Vcl.StdCtrls, Vcl.Mask, Vcl.DBCtrls,
+  LibFuncoes;
+
+type
+  TfrmProduto = class(TfrmCadastroBase)
+    Código: TLabel;
+    lblNome: TLabel;
+    edtCodigo: TDBEdit;
+    edtNome: TDBEdit;
+    cdsCadastroID: TIntegerField;
+    cdsCadastroNOME: TWideStringField;
+    lblTipo: TLabel;
+    lblPreco: TLabel;
+    lblAtivo: TLabel;
+    lblDescricao: TLabel;
+    cbTipo: TComboBox;
+    cbAtivo: TComboBox;
+    dmDescricao: TDBMemo;
+    edtPreco: TDBEdit;
+    cdsCadastroPRECO: TFMTBCDField;
+    cdsCadastroDESCRICAO: TWideStringField;
+    cdsCadastroTIPO: TWideStringField;
+    cdsCadastroATIVO: TWideStringField;
+    lblCDesc: TLabel;
+    procedure btnNovoClick(Sender: TObject);
+    procedure cdsCadastroNewRecord(DataSet: TDataSet);
+    procedure cdsCadastroBeforeEdit(DataSet: TDataSet);
+    procedure dmDescricaoChange(Sender: TObject);
+  private
+    function F_ValidarProduto: Boolean;
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmProduto: TfrmProduto;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmProduto.cdsCadastroBeforeEdit(DataSet: TDataSet);
+begin
+  inherited;
+  if cdsCadastro.FieldByName('TIPO').AsString = 'P' then
+    cbTipo.ItemIndex := 0
+  else
+    cbTipo.ItemIndex := 1;
+
+  if cdsCadastro.FieldByName('ATIVO').AsString = 'S' then
+    cbAtivo.ItemIndex := 0
+  else
+    cbAtivo.ItemIndex := 1;
+end;
+
+procedure TfrmProduto.cdsCadastroNewRecord(DataSet: TDataSet);
+begin
+  inherited;
+  cbTipo.ItemIndex := 0;
+  cbAtivo.ItemIndex := 0;
+end;
+
+procedure TfrmProduto.dmDescricaoChange(Sender: TObject);
+begin
+  inherited;
+  P_ContadorCaracteres(dmDescricao, lblCDesc, 500);
+end;
+
+function TfrmProduto.F_ValidarProduto: Boolean;
+var
+  vID: Integer;
+begin
+  vID := 0;
+
+  if cdsCadastro.State = dsEdit then
+    vID := cdsCadastro.FieldByName('ID').AsInteger;
+
+  Result := TProdutoService.F_Validar(edtNome.Text,
+    cdsCadastro.FieldByName('PRECO').AsCurrency, vID, DM.FDConnection);
+end;
+
+procedure TfrmProduto.btnNovoClick(Sender: TObject);
+begin
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    //Validação visual dos campos obrigatórios
+    if not F_ValidarCamposObrigatorios then
+      Exit;
+
+    if not F_ValidarProduto then
+      Exit;
+
+    if cbTipo.ItemIndex = 0 then
+      cdsCadastro.FieldByName('TIPO').AsString := 'P'
+    else
+      cdsCadastro.FieldByName('TIPO').AsString := 'S';
+
+    if cbAtivo.ItemIndex = 0 then
+      cdsCadastro.FieldByName('ATIVO').AsString := 'S'
+    else
+      cdsCadastro.FieldByName('ATIVO').AsString := 'N';
+  end;
+  inherited;
+end;
+
+end.

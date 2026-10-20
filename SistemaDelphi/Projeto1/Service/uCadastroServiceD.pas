@@ -1,0 +1,117 @@
+unit uCadastroServiceD;
+
+interface
+
+uses
+  System.SysUtils,
+  System.Variants,
+  Data.DB,
+  Datasnap.DBClient,
+  uCadastroRepositoryD;
+
+type
+  TCadastroService = class
+  private
+    FRepository: TCadastroRepository;
+    FTabela: string;
+
+  public
+    constructor Create(
+      pRepository: TCadastroRepository;
+      pTabela: string);
+
+    function F_Inserir(pDataSet: TDataSet): Boolean;
+    function F_Alterar(pDataSet: TDataSet): Boolean;
+    function F_Excluir(pID: Variant): Boolean;
+
+    procedure F_SalvarPrincipalDetalhes(
+      pPrincipal: TDataSet;
+      pDetalhes: TClientDataSet;
+      const pTabelaDetalhe, pCampoFK: string);
+  end;
+
+implementation
+
+constructor TCadastroService.Create(
+  pRepository: TCadastroRepository;
+  pTabela: string);
+begin
+  inherited Create;
+
+  if not Assigned(pRepository) then
+    raise Exception.Create(
+      'O Repository não foi informado.');
+
+  if Trim(pTabela) = '' then
+    raise Exception.Create(
+      'A tabela não foi informada.');
+
+  FRepository := pRepository;
+  FTabela := Trim(pTabela);
+end;
+
+function TCadastroService.F_Inserir(
+  pDataSet: TDataSet): Boolean;
+begin
+  if not Assigned(pDataSet) then
+    raise Exception.Create(
+      'O DataSet não foi informado.');
+
+  if pDataSet.State <> dsInsert then
+    raise Exception.Create(
+      'O DataSet não está em modo de inserção.');
+
+  Result := FRepository.F_Inserir(
+    FTabela, pDataSet);
+end;
+
+function TCadastroService.F_Alterar(
+  pDataSet: TDataSet): Boolean;
+begin
+  if not Assigned(pDataSet) then
+    raise Exception.Create(
+      'O DataSet não foi informado.');
+
+  if pDataSet.State <> dsEdit then
+    raise Exception.Create(
+      'O DataSet não está em modo de edição.');
+
+  Result := FRepository.F_Alterar(
+    FTabela, pDataSet);
+end;
+
+function TCadastroService.F_Excluir(
+  pID: Variant): Boolean;
+begin
+  if VarIsNull(pID) or VarIsEmpty(pID) then
+    raise Exception.Create(
+      'O ID do registro não foi informado.');
+
+  Result := FRepository.F_Excluir(
+    FTabela, pID);
+end;
+
+procedure TCadastroService.F_SalvarPrincipalDetalhes(
+  pPrincipal: TDataSet;
+  pDetalhes: TClientDataSet;
+  const pTabelaDetalhe, pCampoFK: string);
+begin
+  if not Assigned(pPrincipal) then
+    raise Exception.Create(
+      'O DataSet principal não foi informado.');
+
+  if not Assigned(pDetalhes) then
+    raise Exception.Create(
+      'O DataSet de detalhes não foi informado.');
+
+  { Adicione aqui as validações específicas do cadastro. }
+  FRepository.F_SalvarPrincipalDetalhes(
+    FTabela,
+    pPrincipal,
+    pDetalhes,
+    pTabelaDetalhe,
+    pCampoFK);
+end;
+
+end.
+

@@ -1,0 +1,43 @@
+program SistemaCliente;
+
+uses
+  Vcl.Forms,
+  uPrincipal in 'uPrincipal.pas' {frmPrincipal},
+  uFrmCadastroBase in 'Padrao\Forms\uFrmCadastroBase.pas' {frmCadastroBase},
+  uClientes in 'Cadastros\uClientes.pas' {frmCliente},
+  uDM in 'Padrao\Data\uDM.pas' {DM: TDataModule},
+  uClienteService in 'Service\uClienteService.pas',
+  uUpdate in 'Padrao\Update\uUpdate.pas',
+  uLibFuncoesUpdate in 'Padrao\Update\uLibFuncoesUpdate.pas',
+  uCadastroRepository in 'Repository\uCadastroRepository.pas',
+  uCadastroService in 'Service\uCadastroService.pas',
+  LibFuncoes in 'Padrao\Lib\LibFuncoes.pas',
+  uFrmIA in 'Padrao\Forms\uFrmIA.pas' {frmIA},
+  uIA in 'Service\uIA.pas',
+  uProduto in 'Cadastros\uProduto.pas' {frmProduto},
+  uProdutoService in 'Service\uProdutoService.pas',
+  uClienteAPI in 'Cadastros\uClienteAPI.pas' {frmApiCliente},
+  uFrmCadastroBaseD in 'Padrao\Forms\uFrmCadastroBaseD.pas' {frmCadastroBaseD},
+  uCadastroServiceD in 'Service\uCadastroServiceD.pas',
+  uCadastroRepositoryD in 'Repository\uCadastroRepositoryD.pas',
+  uVendas in 'Cadastros\uVendas.pas' {frmVendas},
+  uDMSearch in 'Padrao\Forms\uDMSearch.pas' {DM6: TDataModule};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TDM, DM);
+  DM.P_Conectar;
+  //crie os forms
+  Application.CreateForm(TfrmPrincipal, frmPrincipal);
+  Application.CreateForm(TfrmCadastroBase, frmCadastroBase);
+  Application.CreateForm(TfrmCadastroBaseD, frmCadastroBaseD);
+  Application.CreateForm(TfrmCliente, frmCliente);
+  Application.CreateForm(TfrmIA, frmIA);
+  Application.CreateForm(TfrmProduto, frmProduto);
+  Application.CreateForm(TfrmApiCliente, frmApiCliente);
+  Application.CreateForm(TfrmVendas, frmVendas);
+  Application.Run;
+end.

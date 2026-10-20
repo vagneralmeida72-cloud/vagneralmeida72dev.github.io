@@ -16,7 +16,13 @@ uses
   uIA in 'Service\uIA.pas',
   uProduto in 'Cadastros\uProduto.pas' {frmProduto},
   uProdutoService in 'Service\uProdutoService.pas',
-  uClienteAPI in 'Cadastros\uClienteAPI.pas' {frmApiCliente};
+  uClienteAPI in 'Cadastros\uClienteAPI.pas' {frmApiCliente},
+  uFrmCadastroBaseD in 'Padrao\Forms\uFrmCadastroBaseD.pas' {frmCadastroBaseD},
+  uCadastroServiceD in 'Service\uCadastroServiceD.pas',
+  uCadastroRepositoryD in 'Repository\uCadastroRepositoryD.pas',
+  uVendas in 'Cadastros\uVendas.pas' {frmVendas},
+  uFrmConsultaBaseD in 'Padrao\Forms\uFrmConsultaBaseD.pas',
+  uConsultaServiceD in 'Service\uConsultaServiceD.pas';
 
 {$R *.res}
 
@@ -28,9 +34,11 @@ begin
   //crie os forms
   Application.CreateForm(TfrmPrincipal, frmPrincipal);
   Application.CreateForm(TfrmCadastroBase, frmCadastroBase);
+  Application.CreateForm(TfrmCadastroBaseD, frmCadastroBaseD);
   Application.CreateForm(TfrmCliente, frmCliente);
   Application.CreateForm(TfrmIA, frmIA);
   Application.CreateForm(TfrmProduto, frmProduto);
   Application.CreateForm(TfrmApiCliente, frmApiCliente);
+  Application.CreateForm(TfrmVendas, frmVendas);
   Application.Run;
 end.

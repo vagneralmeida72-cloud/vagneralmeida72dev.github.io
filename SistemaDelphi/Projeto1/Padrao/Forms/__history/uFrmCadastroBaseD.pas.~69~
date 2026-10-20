@@ -1,0 +1,1411 @@
+unit uFrmCadastroBaseD;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.UITypes,
+  System.SysUtils, System.Variants, System.Classes, System.ImageList,
+  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ImgList,
+  Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.Buttons, Data.DB,
+  Datasnap.DBClient, Datasnap.Provider, FireDAC.Comp.Client, FireDAC.Comp.DataSet,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
+  FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Stan.Async,
+  FireDAC.DApt, Vcl.DBCtrls, uCadastroServiceD, uCadastroRepositoryD;
+
+type
+  TfrmCadastroBaseD = class(TForm)
+    pnlBotoes: TPanel;
+    pgcCadastro: TPageControl;
+    tsPesquisa: TTabSheet;
+    tsCadastro: TTabSheet;
+    pnlCadastro: TPanel;
+    dbgCadastro: TDBGrid;
+    cdsCadastro: TClientDataSet;
+    dsCadastro: TDataSource;
+    qryCadastro: TFDQuery;
+    dspCadastro: TDataSetProvider;
+    btnNovo: TSpeedButton;
+    imgIcon: TImageList;
+    btnFechar: TSpeedButton;
+    btnExcluir: TSpeedButton;
+    btnAlterar: TSpeedButton;
+    pnlDetail: TPanel;
+    pnlAcao2: TPanel;
+    dbGRIDDetail: TDBGrid;
+    pnlCadastro2: TPanel;
+    qryCadastroDetail: TFDQuery;
+    dspCadastroDetail: TDataSetProvider;
+    cdsCadastroDetail: TClientDataSet;
+    dsCadastroDetail: TDataSource;
+    btnNovoD: TSpeedButton;
+    btnExcluirD: TSpeedButton;
+    btnAlterarD: TSpeedButton;
+
+    procedure FormCreate(Sender: TObject);
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnAlterarClick(Sender: TObject);
+    procedure btnExcluirClick(Sender: TObject);
+    procedure btnFecharClick(Sender: TObject);
+    procedure dsCadastroStateChange(Sender: TObject);
+    procedure dbgCadastroTitleClick(Column: TColumn);
+    procedure FormShow(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure btnNovoDClick(Sender: TObject);
+    procedure btnExcluirDClick(Sender: TObject);
+    procedure dsCadastroDetailStateChange(Sender: TObject);
+    procedure dsCadastroDetailDataChange(Sender: TObject; Field: TField);
+    procedure dsCadastroDataChange(Sender: TObject; Field: TField);
+    procedure btnAlterarDClick(Sender: TObject);
+
+  private
+    FRepository: TCadastroRepository;
+    FService: TCadastroService;
+    FSQLOriginal, FTabela, FSQLDetailOriginal, FTabelaDetail, FCampoFK: string;
+    FConfigurado, FDetalhesConfigurados, FSalvando: Boolean;
+
+    procedure P_AtualizarBotoes;
+    procedure P_AcaoBotoes(pEdicao: Boolean);
+    procedure P_MostrarCadastro;
+    procedure P_MostrarPesquisa;
+    procedure P_RecarregarDados;
+    procedure P_PesquisarColuna(pField: TField; pTexto: string);
+
+    // Campos obrigatórios
+    procedure P_ConfigurarCamposObrigatorios;
+    procedure P_ConfigurarControlesObrigatorios(pParent: TWinControl);
+    procedure P_CriarAsterisco(pControle: TWinControl);
+    procedure P_AtualizarCorCampo(pControle: TWinControl);
+    function F_ControleObrigatorioVazio(pControle: TWinControl): Boolean;
+    procedure P_ValidarControlesObrigatorios(pParent: TWinControl;
+      var pPrimeiro: TWinControl; var pValido: Boolean);
+
+    function F_MontarSQLPesquisa(pSQL, pCampo: string): string;
+    procedure P_ConfigurarCampoID;
+    function F_CampoOrigem(pField: TField): string;
+    procedure P_LimparCoresCamposObrigatorios(pParent: TWinControl);
+    procedure P_ConfigurarTitulosGrid;
+    procedure P_AtualizarBotoesDetail;
+    procedure P_AcaoBotoesDetail(pEdicao: Boolean);
+    function F_ValidarCamposObrigatoriosEm(pParent: TWinControl;
+      pMensagem: string): Boolean;
+    function F_ValidarCadastroPrincipal: Boolean;
+    function F_ValidarDetalhe: Boolean;
+    procedure P_RecarregarDetalhes;
+    procedure P_ConfigurarControles(AParent: TWinControl; pEdicao: Boolean);
+    procedure P_AtualizarEstadoDetail;
+    procedure P_ConfigurarCampoIDDetail;
+
+  protected
+    function F_ValidarCamposObrigatorios: Boolean;
+    function F_NomeTabelaCadastro: string; virtual;
+
+  public
+    procedure P_ConfigurarCadastro(pSQL, pTabela: string);
+    procedure P_ConfigurarDetalhes(pSQL, pTabelaDetalhe, pCampoFK: string);
+  end;
+
+var
+  frmCadastroBaseD: TfrmCadastroBaseD;
+
+implementation
+
+{$R *.dfm}
+
+uses
+  uDM, LibFuncoes;
+
+procedure TfrmCadastroBaseD.FormCreate(Sender: TObject);
+begin
+  inherited;
+  if not Assigned(DM) then
+    raise Exception.Create('DataModule DM não foi criado.');
+
+  if not DM.FDConnection.Connected then
+    DM.FDConnection.Connected := True;
+
+  qryCadastro.Connection       := DM.FDConnection;
+  qryCadastroDetail.Connection := DM.FDConnection;
+
+  FDetalhesConfigurados := False;
+  FSQLDetailOriginal    := '';
+  FTabelaDetail         := '';
+  FCampoFK              := '';
+  FSalvando             := False;
+  dsCadastro.OnDataChange := dsCadastroDataChange;
+
+  cdsCadastro.Close;
+  qryCadastro.Close;
+  cdsCadastroDetail.Close;
+  qryCadastroDetail.Close;
+
+  tsPesquisa.TabVisible  := True;
+  tsCadastro.TabVisible  := False;
+  pgcCadastro.ActivePage := tsPesquisa;
+
+  FRepository := TCadastroRepository.Create(DM.FDConnection);
+  FService := nil;
+
+  P_AcaoBotoes(False);
+  P_AtualizarBotoes;
+end;
+
+procedure TfrmCadastroBaseD.FormDestroy(Sender: TObject);
+begin
+  FService.Free;
+  FRepository.Free;
+
+  FService := nil;
+  FRepository := nil;
+end;
+
+function TfrmCadastroBaseD.F_NomeTabelaCadastro: string;
+begin
+  Result := UpperCase(Copy(ClassName, 5, Length(ClassName)));
+end;
+
+procedure TfrmCadastroBaseD.FormShow(Sender: TObject);
+begin
+  if FConfigurado then
+    Exit;
+
+  FTabela := F_NomeTabelaCadastro;
+  FSQLOriginal := 'SELECT * FROM ' + FTabela + ' ORDER BY ID';
+
+  P_ConfigurarCadastro(FSQLOriginal, FTabela);
+  P_ConfigurarCamposObrigatorios;
+
+  // Inicia os campos do cadastro principal bloqueados e cinza.
+  P_ConfigurarControles(pnlCadastro, False);
+
+  FConfigurado := True;
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarCadastro(pSQL, pTabela: string);
+begin
+  if Trim(pSQL) = '' then
+    raise Exception.Create('O SQL do cadastro não foi informado.');
+
+  if Trim(pTabela) = '' then
+    raise Exception.Create('A tabela do cadastro não foi informada.');
+
+  FTabela      := Trim(pTabela);
+  FSQLOriginal := Trim(pSQL);
+
+  cdsCadastro.Close;
+  qryCadastro.Close;
+  qryCadastro.SQL.Clear;
+  qryCadastro.SQL.Text := FSQLOriginal;
+  qryCadastro.Open;
+  cdsCadastro.Open;
+
+  P_ConfigurarCampoID;
+
+  FreeAndNil(FService);
+  FService := TCadastroService.Create(FRepository, FTabela);
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarCampoID;
+var
+  vCampoID: TField;
+begin
+  vCampoID := cdsCadastro.FindField('ID');
+
+  if not Assigned(vCampoID) then
+    Exit;
+
+  vCampoID.Required := False;
+  vCampoID.ReadOnly := True;
+
+  vCampoID.AutoGenerateValue := arAutoInc;
+end;
+
+procedure TfrmCadastroBaseD.btnNovoClick(Sender: TObject);
+begin
+  // INICIAR NOVO CADASTRO
+  if cdsCadastro.State = dsBrowse then
+  begin
+    try
+      // Fecha os detalhes antes de iniciar o novo cadastro.
+      if cdsCadastroDetail.Active then
+      begin
+        if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+          cdsCadastroDetail.Cancel;
+
+        cdsCadastroDetail.Close;
+      end;
+
+      qryCadastroDetail.Close;
+
+      cdsCadastro.Append;
+
+      P_LimparCoresCamposObrigatorios(Self);
+      P_MostrarCadastro;
+
+      // Prepara os detalhes para o novo cadastro.
+      if FDetalhesConfigurados then
+      begin
+        qryCadastroDetail.SQL.Text := FSQLDetailOriginal;
+
+        if qryCadastroDetail.Params.FindParam('P_ID') = nil then
+          raise Exception.Create(
+            'O SQL dos detalhes precisa conter o parâmetro :P_ID.');
+
+        qryCadastroDetail.ParamByName('P_ID').AsInteger := -1;
+
+        // Garante que o Provider esteja associado à consulta.
+        dspCadastroDetail.DataSet := qryCadastroDetail;
+        cdsCadastroDetail.SetProvider(dspCadastroDetail);
+
+        qryCadastroDetail.Open;
+        cdsCadastroDetail.Open;
+        P_ConfigurarCampoIDDetail;
+        P_AcaoBotoesDetail(False);
+      end;
+
+    except
+      on E: Exception do
+        F_Mensagem(
+          'Erro ao iniciar novo registro:' + sLineBreak +
+          E.ClassName + sLineBreak + E.Message,
+          tmErro);
+    end;
+
+    Exit;
+  end;
+
+  // SALVAR CADASTRO PRINCIPAL E DETALHES
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    if not FDetalhesConfigurados then
+    begin
+      F_Mensagem(
+        'Configure a tabela e o relacionamento dos detalhes antes de salvar.',
+        tmAviso);
+      Exit;
+    end;
+
+    if not F_ValidarCadastroPrincipal then
+      Exit;
+
+    if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+    begin
+      if not F_ValidarDetalhe then
+        Exit;
+    end;
+
+    try
+      cdsCadastro.UpdateRecord;
+
+      if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+        cdsCadastroDetail.Post;
+
+      if not Assigned(FService) then
+        raise Exception.Create(
+          'Service do cadastro não foi inicializado.');
+
+      FSalvando := True;
+      try
+        FService.F_SalvarPrincipalDetalhes(
+          cdsCadastro,
+          cdsCadastroDetail,
+          FTabelaDetail,
+          FCampoFK);
+
+        cdsCadastro.MergeChangeLog;
+      finally
+        FSalvando := False;
+      end;
+
+      P_RecarregarDados;
+      P_RecarregarDetalhes;
+      P_MostrarPesquisa;
+
+      F_Mensagem('Cadastro e detalhes salvos com sucesso!');
+
+    except
+      on E: Exception do
+      begin
+        FSalvando := False;
+
+        F_Mensagem(
+          'Erro ao salvar cadastro e detalhes:' +
+          sLineBreak + E.ClassName +
+          sLineBreak + E.Message,
+          tmErro);
+      end;
+    end;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.btnNovoDClick(Sender: TObject);
+begin
+  // Verifica se os detalhes foram configurados.
+  if not FDetalhesConfigurados then
+  begin
+    F_Mensagem(
+      'Os detalhes não foram configurados. ' +
+      'Execute P_ConfigurarDetalhes antes de incluir itens.',
+      tmAviso);
+    Exit;
+  end;
+
+  try
+    // Se estiver inativo, tenta abrir o ClientDataSet.
+    if not cdsCadastroDetail.Active then
+    begin
+      if Trim(FSQLDetailOriginal) = '' then
+        raise Exception.Create(
+          'O SQL dos detalhes não foi configurado.');
+
+      qryCadastroDetail.Close;
+      qryCadastroDetail.SQL.Text := FSQLDetailOriginal;
+
+      if qryCadastroDetail.Params.FindParam('P_ID') = nil then
+        raise Exception.Create(
+          'O SQL dos detalhes precisa conter o parâmetro :P_ID.');
+
+      if cdsCadastro.State in [dsInsert, dsEdit] then
+        qryCadastroDetail.ParamByName('P_ID').AsInteger := -1
+      else if not cdsCadastro.IsEmpty then
+        qryCadastroDetail.ParamByName('P_ID').Value :=
+          cdsCadastro.FieldByName('ID').Value
+      else
+        raise Exception.Create(
+          'Inicie ou selecione um cadastro principal primeiro.');
+
+      dspCadastroDetail.DataSet := qryCadastroDetail;
+      cdsCadastroDetail.SetProvider(dspCadastroDetail);
+
+      cdsCadastroDetail.Open;
+      P_ConfigurarCampoIDDetail;
+    end;
+
+    // Confirma que o dataset foi realmente aberto.
+    if not cdsCadastroDetail.Active then
+      raise Exception.Create(
+        'O ClientDataSet continua inativo após a abertura.');
+
+    // Inicia a inclusão do item.
+    if cdsCadastroDetail.State = dsBrowse then
+    begin
+      if not F_ValidarCadastroPrincipal then
+        Exit;
+
+      cdsCadastroDetail.Append;
+
+      // O detalhe precisa ter um valor local para a FK antes do Post.
+      // Em uma venda nova, 0 é apenas temporário: o repositório troca
+      // esse valor pelo ID real da venda antes de gravar os detalhes.
+      if Trim(FCampoFK) <> '' then
+      begin
+        if cdsCadastroDetail.FindField(FCampoFK) = nil then
+          raise Exception.CreateFmt(
+            'O campo de relacionamento "%s" não existe nos detalhes.',
+            [FCampoFK]);
+
+        cdsCadastroDetail.FieldByName(FCampoFK).Required := False;
+
+        if cdsCadastro.State in [dsInsert, dsEdit] then
+        begin
+          if cdsCadastro.State = dsInsert then
+            cdsCadastroDetail.FieldByName(FCampoFK).AsInteger := 0
+          else if not cdsCadastro.FieldByName('ID').IsNull then
+            cdsCadastroDetail.FieldByName(FCampoFK).Value :=
+              cdsCadastro.FieldByName('ID').Value;
+        end;
+      end;
+
+      P_AtualizarEstadoDetail;
+      P_AcaoBotoesDetail(True);
+      Exit;
+    end;
+
+    // Grava o item no ClientDataSet, sem persistir ainda no banco.
+    if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+    begin
+      if not F_ValidarDetalhe then
+        Exit;
+
+      cdsCadastroDetail.Post;
+      P_AtualizarEstadoDetail;
+      P_AcaoBotoesDetail(False);
+    end;
+
+  except
+    on E: Exception do
+      F_Mensagem(
+        'Erro ao iniciar ou gravar item:' + sLineBreak +
+        E.ClassName + sLineBreak + E.Message,
+        tmErro);
+  end;
+end;
+
+procedure TfrmCadastroBaseD.btnAlterarClick(Sender: TObject);
+begin
+  // Iniciar alteração do cadastro principal
+  if cdsCadastro.State = dsBrowse then
+  begin
+    if cdsCadastro.IsEmpty then
+    begin
+      F_Mensagem('Selecione um registro para alterar.', tmAviso);
+      Exit;
+    end;
+
+    try
+      cdsCadastro.Edit;
+      P_MostrarCadastro;
+      P_AtualizarBotoes;
+    except
+      on E: Exception do
+        F_Mensagem(
+          'Erro ao iniciar alteração:' + sLineBreak +
+          E.Message,
+          tmErro);
+    end;
+
+    Exit;
+  end;
+
+  // Cancelar inclusão ou alteração do cadastro principal
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    try
+      // Descarta a edição atual do item, se houver
+      if Assigned(cdsCadastroDetail) and
+         (cdsCadastroDetail.State in [dsInsert, dsEdit]) then
+        cdsCadastroDetail.Cancel;
+
+      // Descarta inclusões, alterações e exclusões
+      // pendentes dos detalhes
+      if Assigned(cdsCadastroDetail) and
+         cdsCadastroDetail.Active then
+        cdsCadastroDetail.CancelUpdates;
+
+      cdsCadastro.Cancel;
+
+      if FDetalhesConfigurados then
+        P_RecarregarDetalhes;
+
+      P_AcaoBotoesDetail(False);
+      P_MostrarPesquisa;
+      P_AtualizarBotoes;
+    except
+      on E: Exception do
+        F_Mensagem(
+          'Erro ao cancelar cadastro:' + sLineBreak +
+          E.Message,
+          tmErro);
+    end;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.btnAlterarDClick(Sender: TObject);
+begin
+  // Cancelar item em edição ou inclusão
+  if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+  begin
+    try
+      cdsCadastroDetail.Cancel;
+      P_AtualizarEstadoDetail;
+      P_AcaoBotoesDetail(False);
+    except
+      on E: Exception do
+        F_Mensagem(
+          'Erro ao cancelar item:' + sLineBreak + E.Message,
+          tmErro);
+    end;
+
+    Exit;
+  end;
+
+  // Alterar item selecionado
+  if not (cdsCadastro.State in [dsInsert, dsEdit]) then
+    Exit;
+
+  if cdsCadastroDetail.IsEmpty then
+    Exit;
+
+  if not F_ValidarCadastroPrincipal then
+    Exit;
+
+  try
+    cdsCadastroDetail.Edit;
+    P_AtualizarEstadoDetail;
+    P_AcaoBotoesDetail(True);
+  except
+    on E: Exception do
+      F_Mensagem(
+        'Erro ao editar item:' + sLineBreak + E.Message,
+        tmErro);
+  end;
+
+end;
+
+procedure TfrmCadastroBaseD.btnExcluirClick(Sender: TObject);
+var
+  vID: Integer;
+begin
+  if cdsCadastro.IsEmpty then
+    Exit;
+
+  if not Assigned(cdsCadastro.FindField('ID')) then
+  begin
+    F_Mensagem('O campo ID não foi encontrado.', tmAviso);
+    Exit;
+  end;
+
+  try
+    vID := cdsCadastro.FieldByName('ID').AsInteger;
+  except
+    on E: Exception do
+    begin
+      F_Mensagem('O ID do registro é inválido.' + sLineBreak + E.Message, tmErro);
+      Exit;
+    end;
+  end;
+
+  if vID <= 0 then
+  begin
+    F_Mensagem('O ID do registro é inválido.', tmAviso);
+    Exit;
+  end;
+
+  if not F_Confirmar('Deseja realmente excluir este registro?') then
+    Exit;
+
+  try
+    if not Assigned(FService) then
+      raise Exception.Create('Service do cadastro não foi inicializado.');
+
+    if FService.F_Excluir(vID) then
+    begin
+      P_RecarregarDados;
+      F_Mensagem('Registro excluído com sucesso!');
+    end
+    else
+      F_Mensagem('Nenhum registro foi excluído.');
+  except
+    on E: Exception do
+    begin
+       F_Mensagem('Erro ao excluir:' + sLineBreak + E.ClassName +
+        sLineBreak + E.Message, tmErro);
+    end;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.btnExcluirDClick(Sender: TObject);
+begin
+  if cdsCadastro.State = dsBrowse then
+    Exit;
+
+  if cdsCadastroDetail.State <> dsBrowse then
+    Exit;
+
+  if cdsCadastroDetail.IsEmpty then
+    Exit;
+
+  if not F_Confirmar('Deseja realmente excluir este item?') then
+    Exit;
+
+  try
+    cdsCadastroDetail.Delete;
+    P_AtualizarBotoesDetail;
+  except
+    on E: Exception do
+      F_Mensagem(
+        'Erro ao excluir item:' + sLineBreak + E.Message,
+        tmErro);
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_RecarregarDados;
+begin
+  cdsCadastro.Close;
+  qryCadastro.Close;
+  qryCadastro.SQL.Clear;
+  qryCadastro.SQL.Text := FSQLOriginal;
+  qryCadastro.Open;
+  cdsCadastro.Open;
+  P_ConfigurarCampoID;
+  P_ConfigurarTitulosGrid;
+
+  // Libera novamente a navegação da Grid
+  dbgCadastro.Enabled  := True;
+  dbgCadastro.ReadOnly := True;
+end;
+
+procedure TfrmCadastroBaseD.P_AtualizarBotoes;
+begin
+  if not Assigned(cdsCadastro) then
+    Exit;
+
+  btnExcluir.Enabled := (cdsCadastro.State = dsBrowse) and not cdsCadastro.IsEmpty;
+  btnFechar.Enabled := cdsCadastro.State = dsBrowse;
+  P_AtualizarBotoesDetail;
+end;
+
+procedure TfrmCadastroBaseD.P_AcaoBotoes(pEdicao: Boolean);
+begin
+  if pEdicao then
+  begin
+    btnNovo.Caption       := 'Salvar';
+    btnAlterar.Caption    := 'Cancelar';
+    btnNovo.ImageIndex    := 3;
+    btnAlterar.ImageIndex := 5;
+  end
+  else
+  begin
+    btnNovo.Caption       := 'Novo';
+    btnAlterar.Caption    := 'Alterar';
+    btnNovo.ImageIndex    := 0;
+    btnAlterar.ImageIndex := 1;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_MostrarCadastro;
+begin
+  // Configura os indicadores dos campos obrigatórios sempre que
+  // a aba de cadastro for exibida. O método evita duplicar asteriscos.
+  P_ConfigurarCamposObrigatorios;
+
+  tsPesquisa.TabVisible  := False;
+  tsCadastro.TabVisible  := True;
+  pgcCadastro.ActivePage := tsCadastro;
+
+  // No cadastro, libera os campos e restaura suas cores.
+  P_ConfigurarControles(pnlCadastro, True);
+
+  P_AcaoBotoes(True);
+  P_AtualizarBotoes;
+  P_AtualizarBotoesDetail;
+end;
+
+procedure TfrmCadastroBaseD.P_MostrarPesquisa;
+begin
+  tsPesquisa.TabVisible  := True;
+  tsCadastro.TabVisible  := False;
+  pgcCadastro.ActivePage := tsPesquisa;
+
+  // Fora da edição, bloqueia os campos e aplica a cor cinza.
+  P_ConfigurarControles(pnlCadastro, False);
+
+  P_AcaoBotoes(False);
+  P_AtualizarBotoes;
+  P_AtualizarBotoesDetail;
+end;
+
+procedure TfrmCadastroBaseD.btnFecharClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TfrmCadastroBaseD.dsCadastroDataChange(Sender: TObject;
+  Field: TField);
+begin
+  if FSalvando then
+    Exit;
+
+  if cdsCadastro.State = dsBrowse then
+    P_RecarregarDetalhes;
+end;
+
+procedure TfrmCadastroBaseD.dsCadastroDetailDataChange(Sender: TObject;
+  Field: TField);
+begin
+  P_AtualizarBotoesDetail;
+  P_AtualizarEstadoDetail;
+end;
+
+procedure TfrmCadastroBaseD.dsCadastroDetailStateChange(Sender: TObject);
+begin
+  P_AtualizarBotoesDetail;
+  P_AtualizarEstadoDetail;
+end;
+
+procedure TfrmCadastroBaseD.dsCadastroStateChange(Sender: TObject);
+begin
+  P_AtualizarBotoes;
+end;
+
+procedure TfrmCadastroBaseD.dbgCadastroTitleClick(Column: TColumn);
+var
+  vField: TField;
+  vTexto: string;
+begin
+  vField := Column.Field;
+
+  if not Assigned(vField) then
+    Exit;
+
+  if F_CampoOrigem(vField) = '' then
+    Exit;
+
+  vTexto := InputBox('Pesquisar', 'Pesquisar em ' + vField.DisplayLabel, '');
+
+  // Se deixar vazio, volta para o SELECT original
+ if Trim(vTexto) = '' then
+  begin
+    P_RecarregarDados;
+    Exit;
+  end;
+
+  P_PesquisarColuna(vField, vTexto);
+end;
+
+procedure TfrmCadastroBaseD.P_PesquisarColuna(pField: TField;pTexto: string);
+var
+  vCampo: string;
+begin
+  if not Assigned(pField) then
+    Exit;
+
+  // Pega o campo REAL do banco
+  vCampo := F_CampoOrigem(pField);
+
+  if vCampo = '' then
+    Exit;
+
+  if Trim(pTexto) = '' then
+  begin
+    P_RecarregarDados;
+    Exit;
+  end;
+
+  cdsCadastro.Close;
+  qryCadastro.Close;
+  qryCadastro.SQL.Text := F_MontarSQLPesquisa(FSQLOriginal, vCampo);
+  qryCadastro.ParamByName('PESQUISA').AsString := '%' + Trim(pTexto) + '%';
+  qryCadastro.Open;
+  cdsCadastro.Open;
+end;
+
+function TfrmCadastroBaseD.F_MontarSQLPesquisa(pSQL,pCampo: string): string;
+var
+  vSQL, vOrder: string;
+  vPosOrder: Integer;
+begin
+  vSQL := Trim(pSQL);
+  pCampo := Trim(pCampo);
+
+  if pCampo = '' then
+  begin
+    Result := vSQL;
+    Exit;
+  end;
+
+  // Remove ; do final
+  if (vSQL <> '') and (vSQL[Length(vSQL)] = ';') then
+    Delete(vSQL, Length(vSQL), 1);
+
+  vSQL := Trim(vSQL);
+
+  vPosOrder := Pos('ORDER BY', UpperCase(vSQL));
+
+  if vPosOrder > 0 then
+  begin
+    vOrder := Trim(Copy(vSQL, vPosOrder, Length(vSQL)));
+    vSQL   := Trim(Copy(vSQL, 1, vPosOrder - 1));
+    Result := vSQL + ' WHERE ' + pCampo + ' LIKE :PESQUISA ' + vOrder;
+  end
+  else
+    Result := vSQL + ' WHERE ' + pCampo + ' LIKE :PESQUISA';
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarCamposObrigatorios;
+begin
+  P_ConfigurarControlesObrigatorios(Self);
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarControlesObrigatorios(pParent: TWinControl);
+var
+  I: Integer;
+  vControle: TControl;
+  vWinControl: TWinControl;
+begin
+  if not Assigned(pParent) then
+    Exit;
+
+  for I := 0 to pParent.ControlCount - 1 do
+  begin
+    vControle := pParent.Controls[I];
+
+    if not (vControle is TWinControl) then
+      Continue;
+
+    vWinControl := TWinControl(vControle);
+
+    if vWinControl.Tag = 1 then
+    begin
+      if not vWinControl.Enabled then
+        Continue;
+
+      if not vWinControl.Visible then
+        Continue;
+
+      P_CriarAsterisco(vWinControl);
+    end;
+
+    P_ConfigurarControlesObrigatorios(vWinControl);
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_AtualizarCorCampo(pControle: TWinControl);
+var
+  vVazio: Boolean;
+begin
+  if not Assigned(pControle) then
+    Exit;
+
+  if pControle.Tag <> 1 then
+    Exit;
+
+  vVazio := F_ControleObrigatorioVazio(pControle);
+
+  // Campos ligados ao DataSet
+  if pControle is TDBEdit then
+  begin
+    if vVazio then
+      TDBEdit(pControle).Color := $00A5FF
+    else
+      TDBEdit(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  if pControle is TDBComboBox then
+  begin
+    if vVazio then
+      TDBComboBox(pControle).Color := $00A5FF
+    else
+      TDBComboBox(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  if pControle is TDBMemo then
+  begin
+    if vVazio then
+      TDBMemo(pControle).Color := $00A5FF
+    else
+      TDBMemo(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  if pControle is TDBLookupComboBox then
+  begin
+    if vVazio then
+      TDBLookupComboBox(pControle).Color := $00A5FF
+    else
+      TDBLookupComboBox(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  // Campos comuns, não ligados diretamente ao DataSet
+  if pControle is TEdit then
+  begin
+    if vVazio then
+      TEdit(pControle).Color := $00A5FF
+    else
+      TEdit(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  if pControle is TComboBox then
+  begin
+    if vVazio then
+      TComboBox(pControle).Color := $00A5FF
+    else
+      TComboBox(pControle).Color := clWindow;
+    Exit;
+  end;
+
+  if pControle is TMemo then
+  begin
+    if vVazio then
+      TMemo(pControle).Color := $00A5FF
+    else
+      TMemo(pControle).Color := clWindow;
+    Exit;
+  end;
+end;
+
+function TfrmCadastroBaseD.F_ControleObrigatorioVazio(
+  pControle: TWinControl): Boolean;
+var
+  vValor: Variant;
+begin
+  Result := False;
+
+  if not Assigned(pControle) then
+    Exit;
+
+  if pControle.Tag <> 1 then
+    Exit;
+
+  if not pControle.Enabled or not pControle.Visible then
+    Exit;
+
+  // Controles ligados ao DataSet
+  if pControle is TDBEdit then
+  begin
+    Result := Trim(TDBEdit(pControle).Text) = '';
+    Exit;
+  end;
+
+  if pControle is TDBComboBox then
+  begin
+    Result := Trim(TDBComboBox(pControle).Text) = '';
+    Exit;
+  end;
+
+  if pControle is TDBMemo then
+  begin
+    Result := Trim(TDBMemo(pControle).Text) = '';
+    Exit;
+  end;
+
+  if pControle is TDBLookupComboBox then
+  begin
+    vValor := TDBLookupComboBox(pControle).KeyValue;
+    Result := VarIsNull(vValor) or VarIsEmpty(vValor) or
+      ((VarIsStr(vValor)) and (Trim(VarToStr(vValor)) = ''));
+    Exit;
+  end;
+
+  // Controles comuns
+  if pControle is TEdit then
+  begin
+    Result := Trim(TEdit(pControle).Text) = '';
+    Exit;
+  end;
+
+  if pControle is TComboBox then
+  begin
+    Result := Trim(TComboBox(pControle).Text) = '';
+    Exit;
+  end;
+
+  if pControle is TMemo then
+  begin
+    Result := Trim(TMemo(pControle).Lines.Text) = '';
+    Exit;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_CriarAsterisco(pControle: TWinControl);
+var
+  vAsterisco: TLabel;
+begin
+  if not Assigned(pControle) then
+    Exit;
+
+  if pControle.Tag <> 1 then
+    Exit;
+
+  // Tipos de campo suportados pela indicação de obrigatoriedade.
+  if not ((pControle is TDBEdit) or (pControle is TEdit) or
+    (pControle is TDBComboBox) or (pControle is TComboBox) or
+    (pControle is TDBMemo) or (pControle is TMemo) or
+    (pControle is TDBLookupComboBox)) then
+    Exit;
+
+  if pControle.Name = '' then
+    Exit;
+
+  if Assigned(FindComponent('lblObrigatorio_' + pControle.Name)) then
+    Exit;
+
+  vAsterisco := TLabel.Create(Self);
+  vAsterisco.Name := 'lblObrigatorio_' + pControle.Name;
+  vAsterisco.Parent := pControle.Parent;
+  vAsterisco.Caption := '*';
+  vAsterisco.AutoSize := True;
+  vAsterisco.Transparent := True;
+  vAsterisco.Visible := True;
+  vAsterisco.ParentFont := False;
+  // TControl.Font e protegido nesta versao do Delphi.
+  // Copia o tamanho usando a propriedade publica do tipo concreto.
+  vAsterisco.Font.Size := 9;
+  if pControle is TDBEdit then
+    vAsterisco.Font.Size := TDBEdit(pControle).Font.Size
+  else if pControle is TEdit then
+    vAsterisco.Font.Size := TEdit(pControle).Font.Size
+  else if pControle is TDBComboBox then
+    vAsterisco.Font.Size := TDBComboBox(pControle).Font.Size
+  else if pControle is TComboBox then
+    vAsterisco.Font.Size := TComboBox(pControle).Font.Size
+  else if pControle is TDBMemo then
+    vAsterisco.Font.Size := TDBMemo(pControle).Font.Size
+  else if pControle is TMemo then
+    vAsterisco.Font.Size := TMemo(pControle).Font.Size
+  else if pControle is TDBLookupComboBox then
+    vAsterisco.Font.Size := TDBLookupComboBox(pControle).Font.Size;
+
+  vAsterisco.Font.Style := [fsBold];
+  vAsterisco.Font.Color := clRed;
+
+  // Tenta posicionar o asterisco à esquerda do campo.
+  vAsterisco.Left := pControle.Left - vAsterisco.Width - 2;
+
+  // Se não houver espaço à esquerda, posiciona à direita.
+  if vAsterisco.Left < 0 then
+    vAsterisco.Left := pControle.Left + pControle.Width + 2;
+
+  vAsterisco.Top :=
+    pControle.Top + ((pControle.Height - vAsterisco.Height) div 2);
+
+  vAsterisco.BringToFront;
+end;
+
+function TfrmCadastroBaseD.F_ValidarCamposObrigatorios: Boolean;
+begin
+  Result := F_ValidarCadastroPrincipal;
+end;
+
+procedure TfrmCadastroBaseD.P_ValidarControlesObrigatorios(pParent: TWinControl;
+  var pPrimeiro: TWinControl; var pValido: Boolean);
+var
+  I: Integer;
+  vControle: TControl;
+  vWinControl: TWinControl;
+begin
+  if not Assigned(pParent) then
+    Exit;
+
+  for I := 0 to pParent.ControlCount - 1 do
+  begin
+    vControle := pParent.Controls[I];
+
+    if not (vControle is TWinControl) then
+      Continue;
+
+    vWinControl := TWinControl(vControle);
+
+    // Verifica se é obrigatório
+    if vWinControl.Tag = 1 then
+    begin
+      if vWinControl.Enabled and vWinControl.Visible then
+      begin
+        if F_ControleObrigatorioVazio(vWinControl) then
+        begin
+          pValido := False;
+
+          // Pinta o campo vazio
+          P_AtualizarCorCampo(vWinControl);
+
+          // Guarda o primeiro campo vazio
+          if not Assigned(pPrimeiro) then
+            pPrimeiro := vWinControl;
+        end
+        else
+          P_AtualizarCorCampo(vWinControl);
+      end;
+    end;
+    P_ValidarControlesObrigatorios(vWinControl, pPrimeiro, pValido);
+  end;
+end;
+
+function TfrmCadastroBaseD.F_CampoOrigem(pField: TField): string;
+var
+  vOrigin: string;
+  vPos: Integer;
+begin
+  Result := '';
+
+  if not Assigned(pField) then
+    Exit;
+
+  vOrigin := Trim(pField.Origin);
+
+  if vOrigin <> '' then
+  begin
+    vPos := LastDelimiter('.', vOrigin);
+
+    if vPos > 0 then
+      Result := Copy(vOrigin, vPos + 1, MaxInt)
+    else
+      Result := vOrigin;
+  end;
+
+  // Segurança: se o Origin não estiver disponível
+  if Result = '' then
+    Result := pField.FieldName;
+end;
+
+procedure TfrmCadastroBaseD.P_LimparCoresCamposObrigatorios(pParent: TWinControl);
+var
+  I: Integer;
+  vControle: TControl;
+  vWinControl: TWinControl;
+begin
+  if not Assigned(pParent) then
+    Exit;
+
+  for I := 0 to pParent.ControlCount - 1 do
+  begin
+    vControle := pParent.Controls[I];
+
+    if not (vControle is TWinControl) then
+      Continue;
+
+    vWinControl := TWinControl(vControle);
+
+    if vWinControl.Tag = 1 then
+    begin
+      if vWinControl is TDBEdit then
+        TDBEdit(vWinControl).Color := clWindow
+      else if vWinControl is TEdit then
+        TEdit(vWinControl).Color := clWindow
+      else if vWinControl is TDBComboBox then
+        TDBComboBox(vWinControl).Color := clWindow
+      else if vWinControl is TComboBox then
+        TComboBox(vWinControl).Color := clWindow
+      else if vWinControl is TDBMemo then
+        TDBMemo(vWinControl).Color := clWindow
+      else if vWinControl is TMemo then
+        TMemo(vWinControl).Color := clWindow
+      else if vWinControl is TDBLookupComboBox then
+        TDBLookupComboBox(vWinControl).Color := clWindow;
+    end;
+
+    // Também verifica os controles que estiverem dentro de painéis,
+    // caixas de grupo e outros contêineres.
+    P_LimparCoresCamposObrigatorios(vWinControl);
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarTitulosGrid;
+var
+  I: Integer;
+begin
+  for I := 0 to dbgCadastro.Columns.Count - 1 do
+  begin
+    if Assigned(dbgCadastro.Columns[I].Field) then
+      dbgCadastro.Columns[I].Title.Caption := dbgCadastro.Columns[I].Field.DisplayLabel;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_AtualizarBotoesDetail;
+begin
+  if not Assigned(cdsCadastroDetail) then
+    Exit;
+
+  btnExcluirD.Enabled := cdsCadastroDetail.Active
+    and not cdsCadastroDetail.IsEmpty
+    and (cdsCadastroDetail.State = dsBrowse)
+    and (cdsCadastro.State in [dsInsert, dsEdit]);
+
+  btnAlterarD.Enabled := not cdsCadastroDetail.IsEmpty;
+end;
+
+procedure TfrmCadastroBaseD.P_AcaoBotoesDetail(pEdicao: Boolean);
+begin
+  if pEdicao then
+  begin
+    btnNovoD.Caption       := 'Salvar';
+    btnAlterarD.Caption    := 'Cancelar';
+    btnNovoD.ImageIndex    := 3;
+    btnAlterarD.ImageIndex := 5;
+  end
+  else
+  begin
+    btnNovoD.Caption       := 'Novo';
+    btnAlterarD.Caption    := 'Alterar';
+    btnNovoD.ImageIndex    := 0;
+    btnAlterarD.ImageIndex := 1;
+  end;
+
+  pnlCadastro2.Enabled := pEdicao;
+  P_AtualizarBotoesDetail;
+end;
+
+function TfrmCadastroBaseD.F_ValidarCamposObrigatoriosEm(pParent: TWinControl;
+  pMensagem: string): Boolean;
+var
+  vPrimeiro: TWinControl;
+begin
+  Result    := True;
+  vPrimeiro := nil;
+
+  if not Assigned(pParent) then
+    Exit;
+
+  P_ValidarControlesObrigatorios(pParent, vPrimeiro, Result);
+
+  if not Result then
+  begin
+    F_Mensagem(pMensagem, tmAviso);
+
+    if Assigned(vPrimeiro) and vPrimeiro.Visible and vPrimeiro.Enabled and
+       vPrimeiro.CanFocus then
+      vPrimeiro.SetFocus;
+  end;
+end;
+
+function TfrmCadastroBaseD.F_ValidarCadastroPrincipal: Boolean;
+begin
+  Result := F_ValidarCamposObrigatoriosEm(pnlCadastro,
+    'Preencha os campos obrigatórios do cadastro principal!');
+end;
+
+function TfrmCadastroBaseD.F_ValidarDetalhe: Boolean;
+begin
+  Result := F_ValidarCamposObrigatoriosEm(pnlCadastro2,
+    'Preencha os campos obrigatórios do item!');
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarDetalhes(pSQL, pTabelaDetalhe,
+  pCampoFK: string);
+begin
+  if Trim(pSQL) = '' then
+    raise Exception.Create('O SQL dos detalhes não foi informado.');
+
+  if Trim(pTabelaDetalhe) = '' then
+    raise Exception.Create('A tabela de detalhes não foi informada.');
+
+  if Trim(pCampoFK) = '' then
+    raise Exception.Create('O campo de relacionamento não foi informado.');
+
+  cdsCadastroDetail.Close;
+  qryCadastroDetail.Close;
+
+  FSQLDetailOriginal := Trim(pSQL);
+  FTabelaDetail := Trim(pTabelaDetalhe);
+  FCampoFK := Trim(pCampoFK);
+
+  qryCadastroDetail.SQL.Text := FSQLDetailOriginal;
+
+  if qryCadastroDetail.Params.FindParam('P_ID') = nil then
+    raise Exception.Create('O SQL dos detalhes precisa conter o parâmetro :P_ID.');
+
+  dspCadastroDetail.DataSet := qryCadastroDetail;
+  cdsCadastroDetail.SetProvider(dspCadastroDetail);
+
+  FDetalhesConfigurados := True;
+
+  P_RecarregarDetalhes;
+end;
+
+procedure TfrmCadastroBaseD.P_RecarregarDetalhes;
+var
+  vID: Variant;
+begin
+  if not FDetalhesConfigurados then
+    Exit;
+
+  if cdsCadastroDetail.Active then
+  begin
+    if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+      cdsCadastroDetail.Cancel;
+    cdsCadastroDetail.Close;
+  end;
+
+  qryCadastroDetail.Close;
+
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+    vID := -1
+  else if Assigned(cdsCadastro.FindField('ID')) and not cdsCadastro.IsEmpty then
+    vID := cdsCadastro.FieldByName('ID').Value
+  else
+    vID := -1;
+
+  qryCadastroDetail.SQL.Text := FSQLDetailOriginal;
+
+  if qryCadastroDetail.Params.FindParam('P_ID') = nil then
+    raise Exception.Create('O SQL dos detalhes precisa conter o parâmetro :P_ID.');
+
+  qryCadastroDetail.ParamByName('P_ID').Value := vID;
+
+  // Configura o Provider.
+  dspCadastroDetail.DataSet := qryCadastroDetail;
+  cdsCadastroDetail.SetProvider(dspCadastroDetail);
+
+  // Abre o ClientDataSet através do Provider.
+  cdsCadastroDetail.Open;
+  P_ConfigurarCampoIDDetail;
+
+  if not cdsCadastroDetail.Active then
+    raise Exception.Create('Não foi possível abrir o cdsCadastroDetail.');
+
+  P_AcaoBotoesDetail(False);
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarControles(AParent: TWinControl;
+  pEdicao: Boolean);
+var
+  I: Integer;
+  C: TControl;
+begin
+  if not Assigned(AParent) then
+    Exit;
+
+  for I := 0 to AParent.ControlCount - 1 do
+  begin
+    C := AParent.Controls[I];
+
+    // Percorre os contêineres internos.
+    if C is TWinControl then
+      P_ConfigurarControles(TWinControl(C), pEdicao);
+
+    if C is TDBEdit then
+      TDBEdit(C).Enabled := pEdicao
+    else if C is TDBMemo then
+      TDBMemo(C).Enabled := pEdicao
+    else if C is TDBComboBox then
+      TDBComboBox(C).Enabled := pEdicao
+    else if C is TDBLookupComboBox then
+      TDBLookupComboBox(C).Enabled := pEdicao
+    else if C is TEdit then
+      TEdit(C).Enabled := pEdicao
+    else if C is TMemo then
+      TMemo(C).Enabled := pEdicao
+    else if C is TComboBox then
+      TComboBox(C).Enabled := pEdicao
+    else if C is TCheckBox then
+      TCheckBox(C).Enabled := pEdicao
+    else if C is TLabel then
+      TLabel(C).Enabled := pEdicao;
+  end;
+end;
+
+procedure TfrmCadastroBaseD.P_AtualizarEstadoDetail;
+var
+  vEdicao: Boolean;
+begin
+  if not Assigned(cdsCadastroDetail) then
+    Exit;
+
+  vEdicao := cdsCadastroDetail.State in [dsInsert, dsEdit];
+
+  P_ConfigurarControles(pnlCadastro2, vEdicao);
+
+  pnlCadastro2.Enabled := vEdicao;
+end;
+
+procedure TfrmCadastroBaseD.P_ConfigurarCampoIDDetail;
+var
+  vCampoID: TField;
+  vCampoFK: TField;
+begin
+  if not cdsCadastroDetail.Active then
+    Exit;
+
+  // O ID do item será gerado pelo Firebird ao inserir o registro.
+  vCampoID := cdsCadastroDetail.FindField('ID');
+  if Assigned(vCampoID) then
+  begin
+    vCampoID.Required := False;
+    vCampoID.ReadOnly := True;
+    vCampoID.AutoGenerateValue := arAutoInc;
+  end;
+
+  // O Provider pode trazer Required=True do metadado da tabela.
+  // Como a FK só recebe o ID real depois da inserção da venda,
+  // não exigimos valor enquanto o item está sendo montado no CDS.
+  if Trim(FCampoFK) <> '' then
+  begin
+    vCampoFK := cdsCadastroDetail.FindField(FCampoFK);
+    if Assigned(vCampoFK) then
+      vCampoFK.Required := False;
+  end;
+end;
+
+end.

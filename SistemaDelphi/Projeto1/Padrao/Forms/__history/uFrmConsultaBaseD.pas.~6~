@@ -1,0 +1,341 @@
+
+unit uFrmConsultaBaseD;
+
+interface
+
+uses
+  Winapi.Windows,
+  System.SysUtils,
+  System.Classes,
+  System.UITypes,
+  Data.DB,
+  Vcl.Forms,
+  Vcl.Controls,
+  Vcl.StdCtrls,
+  Vcl.ExtCtrls,
+  Vcl.DBGrids,
+  Vcl.Grids,
+  FireDAC.Stan.Param,
+  FireDAC.Comp.Client,
+  LibFuncoes;
+
+type
+  TfrmConsultaBaseD = class(TForm)
+  private
+    FConexao: TFDConnection;
+    FSQL: string;
+
+    FQuery: TFDQuery;
+    FDataSource: TDataSource;
+
+    FEdtPesquisa: TEdit;
+    FGrid: TDBGrid;
+
+    FPainelTopo: TPanel;
+    FPainelBotoes: TPanel;
+
+    FBtnPesquisar: TButton;
+    FBtnSelecionar: TButton;
+    FBtnCancelar: TButton;
+
+    procedure P_Pesquisar(Sender: TObject);
+    procedure P_Selecionar(Sender: TObject);
+    procedure P_DuploClique(Sender: TObject);
+    procedure P_TeclaPressionada(
+      Sender: TObject;
+      var Key: Word;
+      Shift: TShiftState);
+    procedure P_FormShow(Sender: TObject);
+    procedure P_AjustarLayout(Sender: TObject);
+
+  public
+    IDSelecionado: Integer;
+    NomeSelecionado: string;
+    TipoSelecionado: string;
+    PrecoSelecionado: Currency;
+
+    constructor CreateConsulta(
+      AOwner: TComponent;
+      AConexao: TFDConnection;
+      const ATitulo, ASQL, ATextoInicial: string);
+  end;
+
+implementation
+
+constructor TfrmConsultaBaseD.CreateConsulta(
+  AOwner: TComponent;
+  AConexao: TFDConnection;
+  const ATitulo, ASQL, ATextoInicial: string);
+var
+  LLabel: TLabel;
+begin
+  inherited CreateNew(AOwner);
+
+  if not Assigned(AConexao) then
+    raise Exception.Create(
+      'A conexão com o banco não foi informada.');
+
+  if Trim(ASQL) = '' then
+    raise Exception.Create(
+      'O SQL da consulta não foi informado.');
+
+  if Pos(':PESQUISA', UpperCase(ASQL)) = 0 then
+    raise Exception.Create(
+      'O SQL deve conter o parâmetro :PESQUISA.');
+
+  FConexao := AConexao;
+  FSQL := ASQL;
+
+  Caption := ATitulo;
+  Position := poScreenCenter;
+  Width := 800;
+  Height := 500;
+  Constraints.MinWidth := 600;
+  Constraints.MinHeight := 350;
+  BorderStyle := bsSizeable;
+  KeyPreview := True;
+  OnKeyDown := P_TeclaPressionada;
+  OnShow := P_FormShow;
+  OnResize := P_AjustarLayout;
+
+  IDSelecionado := 0;
+  NomeSelecionado := '';
+  TipoSelecionado := '';
+  PrecoSelecionado := 0;
+
+  // Painel superior
+  FPainelTopo := TPanel.Create(Self);
+  FPainelTopo.Parent := Self;
+  FPainelTopo.Align := alTop;
+  FPainelTopo.Height := 76;
+  FPainelTopo.BevelOuter := bvNone;
+  FPainelTopo.ParentBackground := False;
+  FPainelTopo.TabOrder := 0;
+
+  // Rótulo da pesquisa
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := FPainelTopo;
+  LLabel.Caption := 'Pesquisar por nome ou código:';
+  LLabel.Left := 12;
+  LLabel.Top := 8;
+
+  // Campo de pesquisa
+  FEdtPesquisa := TEdit.Create(Self);
+  FEdtPesquisa.Parent := FPainelTopo;
+  FEdtPesquisa.Left := 12;
+  FEdtPesquisa.Top := 30;
+  FEdtPesquisa.Height := 25;
+  FEdtPesquisa.Text := ATextoInicial;
+  FEdtPesquisa.Anchors := [akLeft, akTop, akRight];
+  FEdtPesquisa.TabOrder := 0;
+  FEdtPesquisa.OnKeyDown := P_TeclaPressionada;
+
+  // Botão Pesquisar
+  FBtnPesquisar := TButton.Create(Self);
+  FBtnPesquisar.Parent := FPainelTopo;
+  FBtnPesquisar.Caption := 'Pesquisar';
+  FBtnPesquisar.Width := 100;
+  FBtnPesquisar.Height := 27;
+  FBtnPesquisar.Top := 29;
+  FBtnPesquisar.Anchors := [akTop, akRight];
+  FBtnPesquisar.OnClick := P_Pesquisar;
+  FBtnPesquisar.TabOrder := 1;
+
+  // Grade de resultados
+  FGrid := TDBGrid.Create(Self);
+  FGrid.Parent := Self;
+  FGrid.Align := alClient;
+  FGrid.ReadOnly := True;
+  FGrid.Options := FGrid.Options +
+    [dgTitles, dgIndicator, dgRowSelect,
+     dgAlwaysShowSelection];
+  FGrid.OnDblClick := P_DuploClique;
+  FGrid.OnKeyDown := P_TeclaPressionada;
+  FGrid.TabOrder := 1;
+
+  // Painel inferior
+  FPainelBotoes := TPanel.Create(Self);
+  FPainelBotoes.Parent := Self;
+  FPainelBotoes.Align := alBottom;
+  FPainelBotoes.Height := 52;
+  FPainelBotoes.BevelOuter := bvNone;
+  FPainelBotoes.ParentBackground := False;
+  FPainelBotoes.TabOrder := 2;
+
+  // Botão Selecionar
+  FBtnSelecionar := TButton.Create(Self);
+  FBtnSelecionar.Parent := FPainelBotoes;
+  FBtnSelecionar.Caption := 'Selecionar';
+  FBtnSelecionar.Width := 100;
+  FBtnSelecionar.Height := 30;
+  FBtnSelecionar.Top := 10;
+  FBtnSelecionar.Anchors := [akTop, akRight];
+  FBtnSelecionar.OnClick := P_Selecionar;
+  FBtnSelecionar.Default := True;
+  FBtnSelecionar.TabOrder := 0;
+
+  // Botão Cancelar
+  FBtnCancelar := TButton.Create(Self);
+  FBtnCancelar.Parent := FPainelBotoes;
+  FBtnCancelar.Caption := 'Cancelar';
+  FBtnCancelar.Width := 100;
+  FBtnCancelar.Height := 30;
+  FBtnCancelar.Top := 10;
+  FBtnCancelar.Anchors := [akTop, akRight];
+  FBtnCancelar.ModalResult := mrCancel;
+  FBtnCancelar.Cancel := True;
+  FBtnCancelar.TabOrder := 1;
+
+  // Consulta e fonte de dados
+  FQuery := TFDQuery.Create(Self);
+  FQuery.Connection := FConexao;
+
+  FDataSource := TDataSource.Create(Self);
+  FDataSource.DataSet := FQuery;
+  FGrid.DataSource := FDataSource;
+
+  // Configura os eventos após definir o texto inicial
+  FEdtPesquisa.OnChange := P_Pesquisar;
+
+  // Posiciona os componentes conforme a largura da janela
+  P_AjustarLayout(Self);
+
+  // Executa a primeira pesquisa
+  P_Pesquisar(nil);
+end;
+
+procedure TfrmConsultaBaseD.P_AjustarLayout(Sender: TObject);
+const
+  MARGEM = 12;
+  LARGURA_BOTAO = 100;
+  ESPACO = 10;
+begin
+  if not Assigned(FEdtPesquisa) then
+    Exit;
+
+  // Campo ocupa o espaço disponível, sem esconder o botão
+  FEdtPesquisa.SetBounds(
+    MARGEM,
+    30,
+    FPainelTopo.ClientWidth -
+      (MARGEM * 3) - LARGURA_BOTAO,
+    25
+  );
+
+  // Botão de pesquisa à direita do campo
+  FBtnPesquisar.SetBounds(
+    FPainelTopo.ClientWidth - MARGEM - LARGURA_BOTAO,
+    29,
+    LARGURA_BOTAO,
+    27
+  );
+
+  // Botões inferiores alinhados à direita
+  FBtnCancelar.SetBounds(
+    FPainelBotoes.ClientWidth - MARGEM - LARGURA_BOTAO,
+    10,
+    LARGURA_BOTAO,
+    30
+  );
+
+  FBtnSelecionar.SetBounds(
+    FBtnCancelar.Left - ESPACO - LARGURA_BOTAO,
+    10,
+    LARGURA_BOTAO,
+    30
+  );
+end;
+
+procedure TfrmConsultaBaseD.P_Pesquisar(Sender: TObject);
+begin
+  if not Assigned(FQuery) then
+    Exit;
+
+  FQuery.Close;
+  FQuery.SQL.Text := FSQL;
+
+  if FQuery.Params.FindParam('PESQUISA') = nil then
+    raise Exception.Create(
+      'O SQL não contém o parâmetro :PESQUISA.');
+
+  FQuery.ParamByName('PESQUISA').AsString :=
+    '%' + Trim(FEdtPesquisa.Text) + '%';
+
+  FQuery.Open;
+end;
+
+procedure TfrmConsultaBaseD.P_Selecionar(Sender: TObject);
+begin
+  if not FQuery.Active or FQuery.IsEmpty then
+  begin
+    F_Confirmar('Selecione um registro na consulta.');
+    Exit;
+  end;
+
+  if not Assigned(FQuery.FindField('ID')) then
+    raise Exception.Create(
+      'A consulta precisa retornar o campo ID.');
+
+  if not Assigned(FQuery.FindField('NOME')) then
+    raise Exception.Create(
+      'A consulta precisa retornar o campo NOME.');
+
+  IDSelecionado := FQuery.FieldByName('ID').AsInteger;
+  NomeSelecionado := FQuery.FieldByName('NOME').AsString;
+
+  if Assigned(FQuery.FindField('TIPO')) then
+    TipoSelecionado := FQuery.FieldByName('TIPO').AsString
+  else
+    TipoSelecionado := '';
+
+  if Assigned(FQuery.FindField('PRECO')) then
+    PrecoSelecionado := FQuery.FieldByName('PRECO').AsCurrency
+  else
+    PrecoSelecionado := 0;
+
+  ModalResult := mrOk;
+end;
+
+procedure TfrmConsultaBaseD.P_DuploClique(Sender: TObject);
+begin
+  P_Selecionar(Sender);
+end;
+
+procedure TfrmConsultaBaseD.P_TeclaPressionada(
+  Sender: TObject;
+  var Key: Word;
+  Shift: TShiftState);
+begin
+  case Key of
+    VK_ESCAPE:
+      begin
+        ModalResult := mrCancel;
+        Key := 0;
+      end;
+
+    VK_RETURN:
+      begin
+        // Enter no campo de pesquisa executa a pesquisa.
+        if ActiveControl = FEdtPesquisa then
+          P_Pesquisar(FEdtPesquisa)
+        else
+          P_Selecionar(Sender);
+
+        Key := 0;
+      end;
+  end;
+end;
+
+procedure TfrmConsultaBaseD.P_FormShow(Sender: TObject);
+begin
+  if Assigned(FEdtPesquisa) and
+     FEdtPesquisa.Visible and
+     FEdtPesquisa.Enabled then
+  begin
+    FEdtPesquisa.SetFocus;
+    FEdtPesquisa.SelectAll;
+  end;
+end;
+
+end.
+

@@ -1,0 +1,272 @@
+inherited frmVendas: TfrmVendas
+  Caption = 'Cadastro de Vendas'
+  StyleElements = [seFont, seClient, seBorder]
+  TextHeight = 15
+  inherited pnlBotoes: TPanel
+    StyleElements = [seFont, seClient, seBorder]
+  end
+  inherited pgcCadastro: TPageControl
+    inherited tsCadastro: TTabSheet
+      inherited pnlCadastro: TPanel
+        Height = 90
+        StyleElements = [seFont, seClient, seBorder]
+        ExplicitHeight = 90
+        object lblCodigo: TLabel
+          Left = 27
+          Top = 11
+          Width = 39
+          Height = 15
+          Caption = 'C'#243'digo'
+        end
+        object lblCliente: TLabel
+          Left = 29
+          Top = 35
+          Width = 37
+          Height = 15
+          Caption = 'Cliente'
+        end
+        object lblValorTotal: TLabel
+          Left = 12
+          Top = 59
+          Width = 54
+          Height = 15
+          Caption = 'Valor Total'
+        end
+        object edtCodigo: TDBEdit
+          Left = 75
+          Top = 8
+          Width = 50
+          Height = 23
+          Color = clSilver
+          DataField = 'ID'
+          DataSource = dsCadastro
+          ReadOnly = True
+          TabOrder = 0
+        end
+        object ckbAtivo: TDBCheckBox
+          Left = 131
+          Top = 11
+          Width = 97
+          Height = 17
+          Caption = 'Ativo'
+          DataField = 'STATUS'
+          DataSource = dsCadastro
+          TabOrder = 1
+          ValueChecked = 'S'
+          ValueUnchecked = 'N'
+        end
+        object edtValorTotal: TDBEdit
+          Left = 75
+          Top = 56
+          Width = 70
+          Height = 23
+          DataField = 'VALOR_TOTAL'
+          DataSource = dsCadastro
+          TabOrder = 4
+        end
+        object edtClienteID: TEdit
+          Tag = 1
+          Left = 75
+          Top = 32
+          Width = 50
+          Height = 23
+          TabOrder = 2
+          OnExit = edtClienteIDExit
+          OnKeyDown = edtClienteIDKeyDown
+        end
+        object edtClienteNome: TEdit
+          Left = 124
+          Top = 32
+          Width = 246
+          Height = 23
+          Color = clSilver
+          ReadOnly = True
+          TabOrder = 3
+        end
+      end
+      inherited pnlDetail: TPanel
+        Top = 90
+        Height = 153
+        StyleElements = [seFont, seClient, seBorder]
+        ExplicitTop = 90
+        ExplicitHeight = 153
+        inherited pnlAcao2: TPanel
+          Height = 153
+          StyleElements = [seFont, seClient, seBorder]
+          ExplicitHeight = 153
+          inherited btnNovoD: TSpeedButton
+            ExplicitLeft = 0
+            ExplicitTop = 0
+            ExplicitWidth = 96
+          end
+        end
+        inherited pnlCadastro2: TPanel
+          Height = 153
+          StyleElements = [seFont, seClient, seBorder]
+          ExplicitHeight = 153
+          object lblProdutoID: TLabel
+            Left = 63
+            Top = 33
+            Width = 24
+            Height = 15
+            Caption = 'Item'
+          end
+          object lblQtd: TLabel
+            Left = 25
+            Top = 57
+            Width = 62
+            Height = 15
+            Caption = 'Quantidade'
+          end
+          object lblValorUnit: TLabel
+            Left = 16
+            Top = 81
+            Width = 71
+            Height = 15
+            Caption = 'Valor Unit'#225'rio'
+          end
+          object lblDesconto: TLabel
+            Left = 37
+            Top = 105
+            Width = 50
+            Height = 15
+            Caption = 'Desconto'
+          end
+          object Label1: TLabel
+            Left = 33
+            Top = 129
+            Width = 54
+            Height = 15
+            Caption = 'Valor Total'
+          end
+          object Label2: TLabel
+            Left = 64
+            Top = 9
+            Width = 23
+            Height = 15
+            Caption = 'Tipo'
+          end
+          object edtValorUnit: TDBEdit
+            Tag = 1
+            Left = 95
+            Top = 78
+            Width = 102
+            Height = 23
+            Color = clSilver
+            DataField = 'VALOR_UNITARIO'
+            DataSource = dsCadastroDetail
+            ReadOnly = True
+            TabOrder = 0
+          end
+          object edtQuantidade: TDBEdit
+            Tag = 1
+            Left = 95
+            Top = 54
+            Width = 57
+            Height = 23
+            DataField = 'QUANTIDADE'
+            DataSource = dsCadastroDetail
+            TabOrder = 1
+            OnChange = edtQuantidadeChange
+            OnKeyPress = edtQuantidadeKeyPress
+          end
+          object edtDesconto: TDBEdit
+            Left = 95
+            Top = 102
+            Width = 102
+            Height = 23
+            DataField = 'DESCONTO'
+            DataSource = dsCadastroDetail
+            TabOrder = 2
+            OnChange = edtDescontoChange
+          end
+          object edtValorTotal2: TDBEdit
+            Left = 95
+            Top = 126
+            Width = 102
+            Height = 23
+            Color = clSilver
+            DataField = 'VALOR_TOTAL'
+            DataSource = dsCadastroDetail
+            ReadOnly = True
+            TabOrder = 3
+          end
+          object cbTipo: TComboBox
+            Left = 95
+            Top = 6
+            Width = 102
+            Height = 23
+            ItemIndex = 0
+            TabOrder = 4
+            Text = 'Produto'
+            OnExit = cbTipoExit
+            Items.Strings = (
+              'Produto'
+              'Servi'#231'o')
+          end
+          object edttProduto: TEdit
+            Tag = 1
+            Left = 95
+            Top = 30
+            Width = 50
+            Height = 23
+            TabOrder = 5
+            OnExit = edttProdutoExit
+            OnKeyDown = edttProdutoKeyDown
+          end
+          object edttProdutoNome: TEdit
+            Left = 144
+            Top = 30
+            Width = 246
+            Height = 23
+            Color = clSilver
+            ReadOnly = True
+            TabOrder = 6
+          end
+        end
+      end
+      inherited dbGRIDDetail: TDBGrid
+        Top = 243
+        Height = 103
+      end
+    end
+  end
+  inherited cdsCadastro: TClientDataSet
+    OnNewRecord = cdsCadastroNewRecord
+  end
+  inherited qryCadastro: TFDQuery
+    SQL.Strings = (
+      'SELECT'
+      '    ID,'
+      '    CLIENTE_ID,'
+      '    DATA_VENDA,'
+      '    VALOR_TOTAL,'
+      '    STATUS'
+      ' FROM VENDA'
+      ' ORDER BY ID')
+  end
+  inherited qryCadastroDetail: TFDQuery
+    SQL.Strings = (
+      'SELECT'
+      '    ID,'
+      '    VENDA_ID,'
+      '    PRODUTO_ID ,     '
+      '    QUANTIDADE,'
+      '    VALOR_UNITARIO, '
+      '    DESCONTO,'
+      '     VALOR_TOTAL, '
+      '    TIPO'
+      ' FROM VENDA_ITEM'
+      ' WHERE VENDA_ID = :P_ID'
+      ' ORDER BY ID')
+    ParamData = <
+      item
+        Name = 'P_ID'
+        ParamType = ptInput
+      end>
+  end
+  inherited cdsCadastroDetail: TClientDataSet
+    BeforeInsert = cdsCadastroDetailBeforeInsert
+    BeforeEdit = cdsCadastroDetailBeforeEdit
+  end
+end

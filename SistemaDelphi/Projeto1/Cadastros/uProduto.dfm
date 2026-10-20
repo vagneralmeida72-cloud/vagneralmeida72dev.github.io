@@ -10,6 +10,8 @@
     inherited tsCadastro: TTabSheet
       inherited pnlCadastro: TPanel
         StyleElements = [seFont, seClient, seBorder]
+        ExplicitLeft = 3
+        ExplicitTop = 3
         object Código: TLabel
           Left = 37
           Top = 27

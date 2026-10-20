@@ -1,0 +1,466 @@
+unit uVendas;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, uFrmCadastroBaseD, Data.DB,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, System.Classes,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Stan.Async, FireDAC.DApt, System.ImageList, Vcl.ImgList, Vcl.Graphics,
+  Datasnap.Provider, FireDAC.Comp.DataSet, FireDAC.Comp.Client, System.UITypes,
+  Datasnap.DBClient, Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls,
+  Vcl.Buttons, Vcl.ExtCtrls, Vcl.Mask, Vcl.DBCtrls, Vcl.WinXCtrls,
+  uDM, uConsultaServiceD, LibFuncoes;
+
+
+type
+  TfrmVendas = class(TfrmCadastroBaseD)
+    lblCodigo: TLabel;
+    edtCodigo: TDBEdit;
+    lblCliente: TLabel;
+    ckbAtivo: TDBCheckBox;
+    lblValorTotal: TLabel;
+    edtValorTotal: TDBEdit;
+    lblProdutoID: TLabel;
+    lblQtd: TLabel;
+    lblValorUnit: TLabel;
+    lblDesconto: TLabel;
+    Label1: TLabel;
+    edtValorUnit: TDBEdit;
+    edtQuantidade: TDBEdit;
+    edtDesconto: TDBEdit;
+    edtValorTotal2: TDBEdit;
+    Label2: TLabel;
+    cbTipo: TComboBox;
+    edtClienteID: TEdit;
+    edtClienteNome: TEdit;
+    edttProduto: TEdit;
+    edttProdutoNome: TEdit;
+    procedure edtClienteIDKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure edtClienteIDExit(Sender: TObject);
+    procedure btnNovoClick(Sender: TObject);
+    procedure btnNovoDClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
+    procedure edttProdutoExit(Sender: TObject);
+    procedure edttProdutoKeyDown(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure cbTipoExit(Sender: TObject);
+    procedure cdsCadastroDetailBeforeEdit(DataSet: TDataSet);
+    procedure cdsCadastroNewRecord(DataSet: TDataSet);
+    procedure edtQuantidadeChange(Sender: TObject);
+    procedure edtDescontoChange(Sender: TObject);
+    procedure edtQuantidadeKeyPress(Sender: TObject; var Key: Char);
+    procedure edtDescontoKeyPress(Sender: TObject; var Key: Char);
+    procedure cbTipoChange(Sender: TObject);
+    procedure cdsCadastroDetailNewRecord(DataSet: TDataSet);
+  private
+    FTipo: Integer;
+    procedure P_CalcularValorTotal;
+    { Private declarations }
+  protected
+    function F_NomeTabelaCadastro: string; override;
+  public
+    { Public declarations }
+  end;
+
+var
+  frmVendas: TfrmVendas;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmVendas.btnNovoClick(Sender: TObject);
+begin
+  if cdsCadastro.State in [dsInsert, dsEdit] then
+  begin
+    //Validação visual dos campos obrigatórios
+    if not F_ValidarCamposObrigatorios then
+      Exit;
+  end;
+  inherited;
+end;
+
+procedure TfrmVendas.btnNovoDClick(Sender: TObject);
+begin
+  if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+  begin
+    //Validação visual dos campos obrigatórios
+    if not F_ValidarCamposObrigatorios then
+      Exit;
+  end;
+  inherited;
+end;
+
+procedure TfrmVendas.cbTipoChange(Sender: TObject);
+begin
+  inherited;
+  if cbTipo.ItemIndex = 0 then
+    cdsCadastroDetail.FieldByName('TIPO').Asstring := 'P'
+  else
+    cdsCadastroDetail.FieldByName('TIPO').Asstring := 'S';
+end;
+
+procedure TfrmVendas.cbTipoExit(Sender: TObject);
+begin
+  inherited;
+  if (FTipo <> 3) and (FTipo <> cbTipo.ItemIndex) then
+  begin
+    edttProduto.Clear;
+    edttProdutoNome.Clear;
+    edtValorUnit.Clear;
+  end;
+  FTipo := cbTipo.ItemIndex;
+end;
+
+procedure TfrmVendas.cdsCadastroDetailBeforeEdit(DataSet: TDataSet);
+begin
+  inherited;
+  if cdsCadastroDetail.FieldByName('TIPO').AsString = 'P' then
+    cbTipo.ItemIndex := 0
+  else
+    cbTipo.ItemIndex := 1;
+
+  FTipo := cbTipo.ItemIndex;
+end;
+
+procedure TfrmVendas.cdsCadastroDetailNewRecord(DataSet: TDataSet);
+begin
+  inherited;
+  FTipo := 3;
+  if DataSet.FindField('TIPO') <> nil then
+    DataSet.FieldByName('TIPO').AsString := 'P';
+end;
+
+procedure TfrmVendas.cdsCadastroNewRecord(DataSet: TDataSet);
+begin
+  inherited;
+  if DataSet.FindField('STATUS') <> nil then
+    DataSet.FieldByName('STATUS').AsString := 'S';
+
+  if (cdsCadastro.State <> dsInsert) and
+     (cdsCadastro.State <> dsInactive) and
+     not cdsCadastro.IsEmpty and
+     (cdsCadastro.FindField('ID') <> nil) and
+     not cdsCadastro.FieldByName('ID').IsNull then
+  begin
+    if cdsCadastro.FieldByName('ID').AsInteger > 0 then
+      if DataSet.FindField('VENDA_ID') <> nil then
+        DataSet.FieldByName('VENDA_ID').AsInteger :=
+          cdsCadastro.FieldByName('ID').AsInteger;
+  end;
+end;
+
+procedure TfrmVendas.edtClienteIDExit(Sender: TObject);
+var
+  vID: Integer;
+  vQuery: TFDQuery;
+begin
+  inherited;
+  if (cdscadastro.State in [dsInsert, dsEdit]) and (edtClienteID.Text = '') then
+    edtClientenome.Clear;
+
+  if (cdscadastro.State in [dsInsert, dsEdit]) and (edtClienteID.Text <> '') then
+  begin
+    if not TryStrToInt(Trim(edtClienteID.Text), vID) then
+    begin
+      F_Mensagem('Informe um código de cliente válido.');
+      edtClienteID.SetFocus;
+      Exit;
+    end;
+
+    vQuery := TFDQuery.Create(nil);
+    try
+      vQuery.Connection := DM.FDConnection;
+      vQuery.SQL.Text := 'SELECT ID, NOME FROM CLIENTE WHERE ID = :ID';
+
+      vQuery.ParamByName('ID').AsInteger := vID;
+      vQuery.Open;
+
+      if vQuery.IsEmpty then
+      begin
+        F_Mensagem('Cliente não encontrado.');
+        edtClienteID.Clear;
+        edtClientenome.Clear;
+        edtClienteID.SetFocus;
+        Exit;
+      end;
+
+      edtClienteID.Text   := vQuery.FieldByName('ID').AsString;
+      edtClienteNome.Text := vQuery.FieldByName('NOME').AsString;
+    finally
+      vQuery.Free;
+    end;
+  end;
+  P_CalcularValorTotal;
+end;
+
+procedure TfrmVendas.edtClienteIDKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  vID: Integer;
+  vNome, vTipo: string;
+  vPreco: Currency;
+begin
+  if (Key = VK_F2) then
+  begin
+    Key := 0;
+
+    if TConsultaServiceD.F_Selecionar(Self, DM.FDConnection,'Consultar clientes',
+      'SELECT ID, NOME FROM CLIENTE ' +
+      'WHERE UPPER(NOME) LIKE UPPER(:PESQUISA) ' +
+      '   OR CPF LIKE :PESQUISA ' +
+      '   OR CAST(ID AS VARCHAR(20)) LIKE :PESQUISA ' +
+      'ORDER BY NOME', '', vID, vNome, vTipo, vPreco) then
+    begin
+      edtClienteID.Text   := IntToStr(vID);
+      edtClienteNome.Text := vNome;
+    end;
+  end
+  else
+  if Key = VK_RETURN then
+  begin
+    Key := 0;
+
+    // Pesquisa o cliente pelo código informado
+    edtClienteIDExit(Sender);
+    if Trim(edtClienteNome.Text) <> '' then
+      SelectNext(ActiveControl, True, True);
+  end
+  else
+   exit;
+end;
+
+procedure TfrmVendas.edtDescontoChange(Sender: TObject);
+var
+  vTexto: string;
+  vI: Integer;
+  vVirgulas: Integer;
+begin
+  vTexto := Trim(edtDesconto.Text);
+  vVirgulas := 0;
+
+  for vI := 1 to Length(vTexto) do
+  begin
+    if vTexto[vI] = ',' then
+      Inc(vVirgulas)
+    else if not CharInSet(vTexto[vI], ['0'..'9']) then
+    begin
+      F_Mensagem('O desconto aceita somente números e uma vírgula.');
+      edtDesconto.clear;
+      Exit;
+    end;
+  end;
+
+  if vVirgulas > 1 then
+  begin
+    F_Mensagem('O desconto aceita somente uma vírgula.');
+    Exit;
+  end;
+
+  P_CalcularValorTotal;
+end;
+
+procedure TfrmVendas.edtDescontoKeyPress(Sender: TObject; var Key: Char);
+begin
+  inherited;
+  // Permite apagar
+  if Key = #8 then
+    Exit;
+
+  // Permite números
+  if CharInSet(Key, ['0'..'9']) then
+    Exit;
+
+  // Permite somente uma vírgula
+  if (Key = ',') and
+     (Pos(',', edtDesconto.Text) = 0) then
+    Exit;
+
+  // Bloqueia qualquer outro caractere
+  Key := #0;
+end;
+
+procedure TfrmVendas.edtQuantidadeChange(Sender: TObject);
+var
+  vQuantidade: Integer;
+begin
+  if Trim(edtQuantidade.Text) = '' then
+    Exit;
+
+  if not TryStrToInt(Trim(edtQuantidade.Text), vQuantidade) then
+  begin
+    F_Mensagem('Informe somente números inteiros na quantidade.');
+    edtQuantidade.clear;
+    Exit;
+  end;
+
+  P_CalcularValorTotal;
+end;
+
+procedure TfrmVendas.edtQuantidadeKeyPress(Sender: TObject; var Key: Char);
+begin
+  inherited;
+  // Permite números inteiros e Backspace
+  if not CharInSet(Key, ['0'..'9', #8]) then
+    Key := #0;
+end;
+
+procedure TfrmVendas.edttProdutoExit(Sender: TObject);
+var
+  vID: Integer;
+  vQuery: TFDQuery;
+  vTipo: string;
+begin
+  inherited;
+
+  if (cdscadastro.State in [dsInsert, dsEdit]) and (Trim(edttProduto.Text) = '') then
+  begin
+    edttProduto.Clear;
+    edttProdutoNome.Clear;
+    edtValorUnit.Clear;
+    Exit;
+  end;
+
+  if (cdscadastro.State in [dsInsert, dsEdit]) and (Trim(edttProduto.Text) <> '') then
+  begin
+    if not TryStrToInt(Trim(edttProduto.Text), vID) then
+    begin
+      F_Mensagem('Informe um código válido.');
+      edttProduto.SetFocus;
+      Exit;
+    end;
+
+    //Define o tipo conforme o combo selecionado
+    case cbTipo.ItemIndex of
+      0: vTipo := 'P'; // Produto
+      1: vTipo := 'S'; // Serviço
+    else
+      F_Mensagem('Selecione o tipo de produto ou serviço.');
+      cbTipo.SetFocus;
+      Exit;
+    end;
+
+    vQuery := TFDQuery.Create(nil);
+    try
+      vQuery.Connection := DM.FDConnection;
+
+      vQuery.SQL.Text := 'SELECT ID, NOME, PRECO FROM PRODUTO WHERE ID = :ID ' +
+        '  AND TIPO = :TIPO';
+
+      vQuery.ParamByName('ID').AsInteger  := vID;
+      vQuery.ParamByName('TIPO').AsString := vTipo;
+      vQuery.Open;
+
+      if vQuery.IsEmpty then
+      begin
+        F_Mensagem('Produto ou serviço não encontrado para o tipo selecionado.');
+        edttProduto.Clear;
+        edttProdutoNome.Clear;
+        edtValorUnit.Clear;
+        if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+          cdsCadastroDetail.FieldByName('PRODUTO_ID').Clear;
+        Exit;
+      end;
+
+      edttProduto.Text     := vQuery.FieldByName('ID').AsString;
+      edttProdutoNome.Text := vQuery.FieldByName('NOME').AsString;
+      if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+      begin
+        cdsCadastroDetail.FieldByName('PRODUTO_ID').AsInteger := vID;
+        cdsCadastroDetail.FieldByName('VALOR_UNITARIO').AsCurrency :=
+            vQuery.FieldByName('PRECO').AsCurrency;
+        P_CalcularValorTotal;
+      end;
+    finally
+      vQuery.Free;
+    end;
+  end;
+end;
+
+procedure TfrmVendas.edttProdutoKeyDown(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+var
+  vID: Integer;
+  vSQL, vNome, vTipo: string;
+  vPreco: Currency;
+begin
+  if Key = VK_F2 then
+  begin
+    Key := 0;
+
+    // Define o filtro conforme o tipo selecionado
+    case cbTipo.ItemIndex of
+      0: vTipo := 'P'; // Produto
+      1: vTipo := 'S'; // Serviço
+    else
+      F_Mensagem('Selecione o tipo de produto ou serviço.');
+      cbTipo.SetFocus;
+      Exit;
+    end;
+
+    // Monta a consulta com o filtro de tipo
+    vSQL :=
+      'SELECT ID, NOME, TIPO, PRECO FROM PRODUTO ' +
+      'WHERE TIPO = ' + QuotedStr(vTipo) + ' ' +
+      'AND (UPPER(NOME) LIKE UPPER(:PESQUISA) ' +
+      'OR CAST(ID AS VARCHAR(20)) LIKE :PESQUISA) ' +
+      'ORDER BY NOME';
+
+    if TConsultaServiceD.F_Selecionar(Self, DM.FDConnection,
+      'Consultar produtos e/ou serviços', vSQL, '', vID, vNome,
+      vTipo, vPreco) then
+    begin
+      edttProduto.Text     := IntToStr(vID);
+      edttProdutoNome.Text := vNome;
+      if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+      begin
+        cdsCadastroDetail.FieldByName('PRODUTO_ID').AsInteger := vID;
+        cdsCadastroDetail.FieldByName('VALOR_TOTAL').AsCurrency := vPreco;
+      end;
+      P_CalcularValorTotal;
+    end;
+  end
+  else if Key = VK_RETURN then
+  begin
+    Key := 0;
+
+    edttProdutoExit(Sender);
+
+    if Trim(edttProdutoNome.Text) <> '' then
+      SelectNext(ActiveControl, True, True);
+  end;
+end;
+
+procedure TfrmVendas.FormShow(Sender: TObject);
+begin
+  inherited;
+  P_ConfigurarDetalhes('SELECT * FROM VENDA_ITEM WHERE VENDA_ID = :P_ID',
+    'VENDA_ITEM', 'VENDA_ID');
+end;
+
+function TfrmVendas.F_NomeTabelaCadastro: string;
+begin
+  Result := 'VENDA';
+end;
+
+procedure TfrmVendas.P_CalcularValorTotal;
+var
+  vQuantidade: Integer;
+  vValorUnit, vDesconto, vTotal: Currency;
+begin
+  vQuantidade := StrToIntDef(Trim(edtQuantidade.Text), 0);
+  vValorUnit  := StrToCurrDef(Trim(edtValorUnit.Text), 0);
+  vDesconto   := StrToCurrDef(Trim(edtDesconto.Text), 0);
+
+  // Calcula o valor total
+  vTotal := vQuantidade * (vValorUnit - vDesconto);
+
+  // Grava o valor numérico no campo
+  if cdsCadastroDetail.State in [dsInsert, dsEdit] then
+    cdsCadastroDetail.FieldByName('VALOR_TOTAL').AsCurrency := vTotal;
+end;
+
+end.

@@ -1,0 +1,227 @@
+unit uFrmConsultaBaseD;
+
+interface
+
+uses
+  System.SysUtils, System.Classes, Data.DB,
+  Vcl.Forms, Vcl.Controls, Vcl.StdCtrls, Vcl.ExtCtrls,
+  Vcl.DBGrids, Vcl.Grids,
+  FireDAC.Comp.Client;
+
+type
+  TfrmConsultaBaseD = class(TForm)
+  private
+    FConexao: TFDConnection;
+    FSQL: string;
+    FQuery: TFDQuery;
+    FDataSource: TDataSource;
+    FEdtPesquisa: TEdit;
+    FGrid: TDBGrid;
+    FPainelTopo: TPanel;
+    FPainelBotoes: TPanel;
+    FBtnSelecionar: TButton;
+    FBtnCancelar: TButton;
+
+    procedure P_Pesquisar(Sender: TObject);
+    procedure P_Selecionar(Sender: TObject);
+    procedure P_DuploClique(Sender: TObject);
+    procedure P_TeclaPressionada(Sender: TObject;
+      var Key: Word; Shift: TShiftState);
+
+  public
+    IDSelecionado: Integer;
+    NomeSelecionado: string;
+    TipoSelecionado: string;
+    PrecoSelecionado: Currency;
+
+    constructor CreateConsulta(
+      AOwner: TComponent;
+      AConexao: TFDConnection;
+      const ATitulo, ASQL, ATextoInicial: string);
+
+  end;
+
+implementation
+
+uses
+  Winapi.Windows;
+
+constructor TfrmConsultaBaseD.CreateConsulta(
+  AOwner: TComponent;
+  AConexao: TFDConnection;
+  const ATitulo, ASQL, ATextoInicial: string);
+var
+  LLabel: TLabel;
+begin
+  inherited CreateNew(AOwner);
+
+  if not Assigned(AConexao) then
+    raise Exception.Create(
+      'A conexão com o banco não foi informada.');
+
+  if Trim(ASQL) = '' then
+    raise Exception.Create(
+      'O SQL da consulta não foi informado.');
+
+  if Pos(':PESQUISA', UpperCase(ASQL)) = 0 then
+    raise Exception.Create(
+      'O SQL deve conter o parâmetro :PESQUISA.');
+
+  FConexao := AConexao;
+  FSQL := ASQL;
+
+  Caption := ATitulo;
+  Position := poScreenCenter;
+  Width := 800;
+  Height := 500;
+  BorderStyle := bsSizeable;
+  KeyPreview := True;
+  OnKeyDown := P_TeclaPressionada;
+
+  FPainelTopo := TPanel.Create(Self);
+  FPainelTopo.Parent := Self;
+  FPainelTopo.Align := alTop;
+  FPainelTopo.Height := 65;
+  FPainelTopo.BevelOuter := bvNone;
+
+  LLabel := TLabel.Create(Self);
+  LLabel.Parent := FPainelTopo;
+  LLabel.Caption := 'Pesquisar:';
+  LLabel.Left := 12;
+  LLabel.Top := 8;
+
+  FEdtPesquisa := TEdit.Create(Self);
+  FEdtPesquisa.Parent := FPainelTopo;
+  FEdtPesquisa.Left := 12;
+  FEdtPesquisa.Top := 28;
+  FEdtPesquisa.Width := 750;
+  FEdtPesquisa.Anchors := [akLeft, akTop, akRight];
+  FEdtPesquisa.OnChange := P_Pesquisar;
+
+  FGrid := TDBGrid.Create(Self);
+  FGrid.Parent := Self;
+  FGrid.Align := alClient;
+  FGrid.ReadOnly := True;
+  FGrid.Options := FGrid.Options +
+    [dgTitles, dgIndicator, dgRowSelect,
+     dgAlwaysShowSelection];
+  FGrid.OnDblClick := P_DuploClique;
+
+  FPainelBotoes := TPanel.Create(Self);
+  FPainelBotoes.Parent := Self;
+  FPainelBotoes.Align := alBottom;
+  FPainelBotoes.Height := 50;
+  FPainelBotoes.BevelOuter := bvNone;
+
+  FBtnSelecionar := TButton.Create(Self);
+  FBtnSelecionar.Parent := FPainelBotoes;
+  FBtnSelecionar.Caption := 'Selecionar';
+  FBtnSelecionar.Width := 100;
+  FBtnSelecionar.Height := 30;
+  FBtnSelecionar.Left := 560;
+  FBtnSelecionar.Top := 10;
+  FBtnSelecionar.Anchors := [akRight, akTop];
+  FBtnSelecionar.OnClick := P_Selecionar;
+  FBtnSelecionar.Default := True;
+
+  FBtnCancelar := TButton.Create(Self);
+  FBtnCancelar.Parent := FPainelBotoes;
+  FBtnCancelar.Caption := 'Cancelar';
+  FBtnCancelar.Width := 100;
+  FBtnCancelar.Height := 30;
+  FBtnCancelar.Left := 670;
+  FBtnCancelar.Top := 10;
+  FBtnCancelar.Anchors := [akRight, akTop];
+  FBtnCancelar.ModalResult := mrCancel;
+  FBtnCancelar.Cancel := True;
+
+  FQuery := TFDQuery.Create(Self);
+  FQuery.Connection := FConexao;
+
+  FDataSource := TDataSource.Create(Self);
+  FDataSource.DataSet := FQuery;
+  FGrid.DataSource := FDataSource;
+
+  IDSelecionado := 0;
+  NomeSelecionado := '';
+  TipoSelecionado := '';
+  PrecoSelecionado := 0;
+
+  FEdtPesquisa.Text := ATextoInicial;
+  P_Pesquisar(nil);
+
+  FEdtPesquisa.SetFocus;
+  FEdtPesquisa.SelectAll;
+end;
+
+procedure TfrmConsultaBaseD.P_Pesquisar(Sender: TObject);
+begin
+  FQuery.Close;
+  FQuery.SQL.Text := FSQL;
+
+  if FQuery.Params.FindParam('PESQUISA') = nil then
+    raise Exception.Create(
+      'O SQL não contém o parâmetro PESQUISA.');
+
+  FQuery.ParamByName('PESQUISA').AsString :=
+    '%' + Trim(FEdtPesquisa.Text) + '%';
+
+  FQuery.Open;
+end;
+
+procedure TfrmConsultaBaseD.P_Selecionar(Sender: TObject);
+begin
+  if not FQuery.Active or FQuery.IsEmpty then
+  begin
+    MessageDlg(
+      'Selecione um registro na consulta.',
+      mtInformation, [mbOK], 0);
+    Exit;
+  end;
+
+  if not Assigned(FQuery.FindField('ID')) then
+    raise Exception.Create(
+      'A consulta precisa retornar o campo ID.');
+
+  if not Assigned(FQuery.FindField('NOME')) then
+    raise Exception.Create(
+      'A consulta precisa retornar o campo NOME.');
+
+  IDSelecionado := FQuery.FieldByName('ID').AsInteger;
+  NomeSelecionado := FQuery.FieldByName('NOME').AsString;
+
+  if Assigned(FQuery.FindField('TIPO')) then
+    TipoSelecionado := FQuery.FieldByName('TIPO').AsString
+  else
+    TipoSelecionado := '';
+
+  if Assigned(FQuery.FindField('PRECO')) then
+    PrecoSelecionado := FQuery.FieldByName('PRECO').AsCurrency
+  else
+    PrecoSelecionado := 0;
+
+  ModalResult := mrOk;
+end;
+
+procedure TfrmConsultaBaseD.P_DuploClique(Sender: TObject);
+begin
+  P_Selecionar(Sender);
+end;
+
+procedure TfrmConsultaBaseD.P_TeclaPressionada(
+  Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if Key = VK_ESCAPE then
+  begin
+    ModalResult := mrCancel;
+    Key := 0;
+  end
+  else if Key = VK_RETURN then
+  begin
+    P_Selecionar(Sender);
+    Key := 0;
+  end;
+end;
+
+end.
+

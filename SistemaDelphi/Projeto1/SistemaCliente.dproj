@@ -160,6 +160,17 @@
             <Form>frmApiCliente</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="Padrao\Forms\uFrmCadastroBaseD.pas">
+            <Form>frmCadastroBaseD</Form>
+        </DCCReference>
+        <DCCReference Include="Service\uCadastroServiceD.pas"/>
+        <DCCReference Include="Repository\uCadastroRepositoryD.pas"/>
+        <DCCReference Include="Cadastros\uVendas.pas">
+            <Form>frmVendas</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="Padrao\Forms\uFrmConsultaBaseD.pas"/>
+        <DCCReference Include="Service\uConsultaServiceD.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
